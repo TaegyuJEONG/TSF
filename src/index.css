@@ -1,0 +1,61 @@
+:root {
+  /* Institutional Palette */
+  --color-primary-900: #0f172a; /* Deep Navy */
+  --color-primary-800: #1e293b;
+  --color-primary-700: #334155;
+  --color-primary-600: #475569;
+  
+  --color-surface-white: #ffffff;
+  --color-surface-gray: #f8fafc; /* Very light cool gray for backgrounds */
+  --color-border: #e2e8f0;
+  
+  --color-text-main: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+
+  --color-accent: #0f172a; /* Keeping it monochromatic/serious */
+  --color-success: #10b981; /* Muted Green */
+  --color-warning: #f59e0b; /* Muted Amber */
+
+  /* Spacing & Layout */
+  --header-height: 64px;
+  --sidebar-width: 260px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-surface-gray);
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-primary-900);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
