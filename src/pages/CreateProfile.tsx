@@ -23,7 +23,7 @@ const CreateProfile: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '480px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/')} // Placeholder link to "Marketplace"
+                    onClick={() => navigate('/marketplace')}
                     style={{
                         background: 'none',
                         border: 'none',

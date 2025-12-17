@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Bookmark } from 'lucide-react';
-import Button from '../components/ui/Button';
+import { Bookmark } from 'lucide-react';
+import TopBar from '../components/layout/TopBar';
 import heroImage from '../assets/listing_1.jpg';
 import image2 from '../assets/listing_2.jpg';
 import image3 from '../assets/listing_3.jpg';
@@ -75,21 +75,7 @@ const Marketplace: React.FC = () => {
         <div style={{ minHeight: '100vh', backgroundColor: '#fff', display: 'flex', flexDirection: 'column' }}>
 
             {/* Header */}
-            <div style={{ height: '70px', padding: '0 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px' }}>TSF</div>
-                    <div style={{ display: 'flex', gap: '24px', fontSize: '14px', fontWeight: 500 }}>
-                        <span style={{ cursor: 'pointer', color: '#6b7280' }}>Sell My Home</span>
-                        <span style={{ cursor: 'pointer', color: '#6b7280' }} onClick={() => navigate('/dashboard')}>Dashboard</span>
-                        <span style={{ cursor: 'pointer', color: '#111827', fontWeight: 600 }}>Marketplace</span>
-                    </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <Button style={{ height: '32px', fontSize: '13px', backgroundColor: '#000', padding: '0 16px' }}>For investment</Button>
-                    <Bell size={20} color="#374151" />
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600 }}>MJ</div>
-                </div>
-            </div>
+            <TopBar />
 
             {/* Filter Bar */}
             <div style={{ padding: '20px 40px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '12px' }}>

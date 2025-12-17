@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, PlusCircle, Settings, Briefcase } from 'lucide-react';
+import { LayoutDashboard, FileText, Calendar, CreditCard, PieChart, User } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
     const linkStyle = ({ isActive }: { isActive: boolean }) => ({
@@ -27,38 +27,34 @@ const Sidebar: React.FC = () => {
             flexDirection: 'column',
             borderRight: '1px solid var(--color-primary-800)'
         }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <h1 style={{ color: 'white', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Briefcase size={20} />
-                    <span>FinBridge</span>
-                </h1>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginTop: '4px' }}>Seller Financing Platform</p>
-            </div>
+            {/* Logo removed to avoid duplication with TopBar */}
+
 
             <nav style={{ padding: '24px 16px', flex: 1 }}>
-                <div style={{ marginBottom: '16px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Menu
-                </div>
 
-                <NavLink to="/" style={linkStyle}>
+                <NavLink to="/listed-home" style={linkStyle}>
                     <LayoutDashboard size={18} />
-                    Dashboard
+                    Listed home
                 </NavLink>
-                <NavLink to="/new-request" style={linkStyle}>
-                    <PlusCircle size={18} />
-                    New Request
+                <NavLink to="/visit-requests" style={linkStyle}>
+                    <Calendar size={18} />
+                    Visit requests
                 </NavLink>
-                <NavLink to="/contracts" style={linkStyle}>
+                <NavLink to="/contract" style={linkStyle}>
                     <FileText size={18} />
-                    My Contracts
+                    Contract
                 </NavLink>
-
-                <div style={{ marginTop: '32px', marginBottom: '16px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    System
-                </div>
-                <NavLink to="/settings" style={linkStyle}>
-                    <Settings size={18} />
-                    Settings
+                <NavLink to="/payments" style={linkStyle}>
+                    <CreditCard size={18} />
+                    Payments
+                </NavLink>
+                <NavLink to="/note-overview" style={linkStyle}>
+                    <PieChart size={18} />
+                    Note Overview
+                </NavLink>
+                <NavLink to="/profile" style={linkStyle}>
+                    <User size={18} />
+                    Profile
                 </NavLink>
             </nav>
 

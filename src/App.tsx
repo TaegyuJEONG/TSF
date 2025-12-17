@@ -19,6 +19,12 @@ import SellerFinancingTerms from './pages/SellerFinancingTerms';
 import ListingPreview from './pages/ListingPreview';
 import Marketplace from './pages/Marketplace';
 import ListingDetail from './pages/ListingDetail';
+import SellerListedHome from './pages/SellerListedHome';
+import VisitRequests from './pages/VisitRequests';
+import Contract from './pages/Contract';
+import Payments from './pages/Payments';
+import MerkleRecord from './pages/MerkleRecord';
+import NoteOverview from './pages/NoteOverview';
 
 function App() {
   return (
@@ -28,9 +34,15 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="new-request" element={<NewRequest />} />
           <Route path="term-sheet" element={<TermSheet />} />
+          <Route path="contract" element={<Contract />} />
           <Route path="contracts" element={<ContractsList />} />
           <Route path="contract-view" element={<ContractView />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="listed-home" element={<SellerListedHome />} />
+          <Route path="visit-requests" element={<VisitRequests />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="merkle-record" element={<MerkleRecord />} />
+          <Route path="note-overview" element={<NoteOverview />} />
         </Route>
         <Route path="/create-profile" element={<CreateProfile />} />
         <Route path="/select-role" element={<SelectRole />} />

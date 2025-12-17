@@ -102,7 +102,7 @@ const ProfileSummary: React.FC = () => {
                 {/* Footer Buttons */}
                 <div style={{ padding: '16px 32px 32px', display: 'grid', gap: '12px' }}>
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/marketplace')}
                         style={{
                             width: '100%',
                             backgroundColor: '#111827', color: 'white', border: 'none', borderRadius: '8px',
