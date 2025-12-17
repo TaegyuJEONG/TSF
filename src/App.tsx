@@ -25,6 +25,9 @@ import Contract from './pages/Contract';
 import Payments from './pages/Payments';
 import MerkleRecord from './pages/MerkleRecord';
 import NoteOverview from './pages/NoteOverview';
+import InvestorConnectWallet from './pages/InvestorConnectWallet';
+import InvestorIdentityVerification from './pages/InvestorIdentityVerification';
+import InvestorVerificationComplete from './pages/InvestorVerificationComplete';
 
 function App() {
   return (
@@ -57,6 +60,11 @@ function App() {
         <Route path="/listing-preview" element={<ListingPreview />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/listing-detail" element={<ListingDetail />} />
+
+        {/* Investor Onboarding Flows */}
+        <Route path="/investor/connect-wallet" element={<InvestorConnectWallet />} />
+        <Route path="/investor/identity-verification" element={<InvestorIdentityVerification />} />
+        <Route path="/investor/verification-complete" element={<InvestorVerificationComplete />} />
 
       </Routes>
 

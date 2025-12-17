@@ -60,7 +60,7 @@ const SelectRole: React.FC = () => {
                     {roles.map((role) => (
                         <div
                             key={role.id}
-                            onClick={() => navigate(role.id === 'buyer' ? '/buying-power' : (role.id === 'owner' ? '/owner-onboarding' : '/dashboard'))}
+                            onClick={() => navigate(role.id === 'buyer' ? '/buying-power' : (role.id === 'owner' ? '/owner-onboarding' : '/investor/connect-wallet'))}
                             onMouseEnter={() => setHoveredRole(role.id)}
                             onMouseLeave={() => setHoveredRole(null)}
                             style={{
