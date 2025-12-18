@@ -15,7 +15,7 @@ const ProfileSummary: React.FC = () => {
         creditGrade: "B+ (660 equivalent)",
         downPayment: "$35,000 (12%)",
         pti: "28%",
-        riskGrade: "Mezzanine",
+        riskGrade: "Tier B",
         evaluationDate: "10-Dec-2025"
     };
 
@@ -81,7 +81,7 @@ const ProfileSummary: React.FC = () => {
                     {/* Risk Grade Highlight */}
                     <div style={{ marginBottom: '32px', padding: '16px', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <div style={{ fontSize: '12px', color: '#92400e', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>Risk Grade</div>
+                            <div style={{ fontSize: '12px', color: '#92400e', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>Profile Grade</div>
                             <div style={{ fontSize: '18px', fontWeight: 700, color: '#b45309' }}>{profileData.riskGrade}</div>
                         </div>
                         <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

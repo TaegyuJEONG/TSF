@@ -6,7 +6,7 @@ const InvestorVerificationComplete = () => {
 
     const handleContinue = () => {
         // Navigate to dashboard or marketplace
-        navigate('/marketplace');
+        navigate('/investor-marketplace');
     };
 
     return (

@@ -76,6 +76,15 @@ const NoteOverview: React.FC = () => {
                         isUserListing={true}
                         showBookmark={false}
                         showPricePerSqft={false}
+                        variant={listingStatus === 'active' ? 'homeowner' : 'investor'}
+                        investorProps={listingStatus === 'active' ? undefined : {
+                            progress: 0,
+                            monthlyPayment: 6000,
+                            remainingTerm: 107,
+                            ltv: 44,
+                            yield: 15.8, // Not used in display explicitly but part of type
+                            badge: 'D-30'
+                        }}
                     />
                     {listingStatus === 'sold' && (
                         <div style={{
@@ -185,7 +194,7 @@ const NoteOverview: React.FC = () => {
                                     fontWeight: 600,
                                     cursor: listingStatus === 'active' ? 'pointer' : 'not-allowed'
                                 }}>
-                                {listingStatus === 'active' ? 'Check Note Value' : (listingStatus === 'listed' ? 'Listed for Investment' : 'Sold')}
+                                {listingStatus === 'active' ? 'Cash Out' : (listingStatus === 'listed' ? 'Listed for Investment' : 'Sold')}
                             </Button>
                         </div>
                     </div>

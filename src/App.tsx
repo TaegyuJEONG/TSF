@@ -18,6 +18,7 @@ import PropertyPhotos from './pages/PropertyPhotos';
 import SellerFinancingTerms from './pages/SellerFinancingTerms';
 import ListingPreview from './pages/ListingPreview';
 import Marketplace from './pages/Marketplace';
+import InvestorMarketplace from './pages/InvestorMarketplace';
 import ListingDetail from './pages/ListingDetail';
 import SellerListedHome from './pages/SellerListedHome';
 import VisitRequests from './pages/VisitRequests';
@@ -28,6 +29,7 @@ import NoteOverview from './pages/NoteOverview';
 import InvestorConnectWallet from './pages/InvestorConnectWallet';
 import InvestorIdentityVerification from './pages/InvestorIdentityVerification';
 import InvestorVerificationComplete from './pages/InvestorVerificationComplete';
+import InvestorListingDetail from './pages/InvestorListingDetail';
 
 function App() {
   return (
@@ -60,8 +62,10 @@ function App() {
         <Route path="/listing-preview" element={<ListingPreview />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/listing-detail" element={<ListingDetail />} />
+        <Route path="/investor/listing/:id" element={<InvestorListingDetail />} />
 
         {/* Investor Onboarding Flows */}
+        <Route path="/investor-marketplace" element={<InvestorMarketplace />} />
         <Route path="/investor/connect-wallet" element={<InvestorConnectWallet />} />
         <Route path="/investor/identity-verification" element={<InvestorIdentityVerification />} />
         <Route path="/investor/verification-complete" element={<InvestorVerificationComplete />} />

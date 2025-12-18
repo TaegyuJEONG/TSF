@@ -143,7 +143,7 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                                         >
                                             <span style={{ fontSize: '14px', color: '#374151' }}>{presets[key].label}</span>
                                             <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-                                                {formatCurrency(presets[key].price)} <span style={{ color: '#6b7280', fontWeight: 400 }}>(IRR ~{presets[key].yield})</span>
+                                                {formatCurrency(presets[key].price)} <span style={{ color: '#6b7280', fontWeight: 400 }}>(IRR at maturity {presets[key].yield})</span>
                                             </span>
                                         </button>
                                     ))}
@@ -194,41 +194,32 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                                 </div>
                             </div>
 
-                            {/* Section: Fees Split */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-                                {/* Due Now Card */}
-                                <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px', backgroundColor: 'white' }}>
-                                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        Due Now <span style={{ fontSize: '10px', backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px', color: '#4b5563', fontWeight: 500 }}>PAYABLE</span>
-                                    </div>
-                                    <div style={{ marginBottom: '8px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                            <span style={{ fontSize: '14px', color: '#374151' }}>Tokenization Fee (0.5%)</span>
-                                            <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>{formatCurrency(tokenizationFee)}</span>
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', lineHeight: '1.4' }}>
-                                            Covers note structuring and on-chain registration.
-                                        </div>
-                                    </div>
+                            {/* Section: Consolidated Fees */}
+                            <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', backgroundColor: 'white', marginBottom: '16px' }}>
+                                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Fee Breakdown</div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '14px', color: '#4b5563' }}>Tokenization Fee (0.5%)</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>{formatCurrency(tokenizationFee)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px dashed #e5e7eb' }}>
+                                    <span style={{ fontSize: '14px', color: '#4b5563' }}>Success Fee (1.0%)</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>{formatCurrency(successFee)}</span>
                                 </div>
 
-                                {/* Due Upon Sale Card */}
-                                <div style={{ border: '1px solid #f3f4f6', borderRadius: '12px', padding: '16px', backgroundColor: '#f9fafb' }}>
-                                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', marginBottom: '12px' }}>
-                                        Due Upon Sale
-                                    </div>
-                                    <div style={{ marginBottom: '8px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                            <span style={{ fontSize: '14px', color: '#4b5563' }}>Success Fee (1%)</span>
-                                            <span style={{ fontSize: '16px', fontWeight: 500, color: '#4b5563' }}>{formatCurrency(successFee)}</span>
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px', lineHeight: '1.4' }}>
-                                            Deducted from sale proceeds only if the note is sold.
-                                        </div>
-                                    </div>
-                                    <div style={{ fontSize: '11px', color: '#9ca3af', fontStyle: 'italic', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e5e7eb' }}>
-                                        This fee is not charged today.
-                                    </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#111827' }}>Total Fees (1.5%)</span>
+                                    <span style={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>{formatCurrency(tokenizationFee + successFee)}</span>
+                                </div>
+                                <div style={{ borderTop: '2px solid #e5e7eb', marginTop: '16px', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#059669' }}>Net Proceeds</span>
+                                    <span style={{ fontSize: '20px', fontWeight: 800, color: '#059669' }}>{formatCurrency(currentPrice - (tokenizationFee + successFee))}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '24px', padding: '0 8px' }}>
+                                <div style={{ fontSize: '13px', color: '#6b7280', lineHeight: '1.5', textAlign: 'center' }}>
+                                    Fees are deducted from the investment proceeds only upon 100% funding completion within the 30-day investment period.
                                 </div>
                             </div>
 
@@ -288,7 +279,7 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                         {step === 'cashout' && (
                             <>
                                 <Button onClick={() => setStep('pricing')} variant="secondary" style={{ borderRadius: '50px', padding: '10px 20px' }}>Back to Pricing</Button>
-                                <Button onClick={handleList} style={{ backgroundColor: 'black', color: 'white', borderRadius: '50px', padding: '10px 24px' }}>Pay Tokenization Fee & List</Button>
+                                <Button onClick={handleList} style={{ backgroundColor: 'black', color: 'white', borderRadius: '50px', padding: '10px 24px' }}>List Note</Button>
                             </>
                         )}
                         {step === 'confirmed' && (

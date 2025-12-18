@@ -50,6 +50,50 @@ const VisitAcceptanceModal: React.FC<VisitAcceptanceModalProps> = ({ isOpen, onC
                     </div>
                 </div>
 
+                {/* Terms to Finalize Checklist */}
+                <div style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: '32px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        Terms to Finalize during Visit
+                    </h3>
+                    <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                        Please ensure you discuss and agree upon these key terms to build the contract later.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        <div>
+                            <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px', textTransform: 'uppercase' }}>Deal Basics</h4>
+                            <ul style={{ margin: 0, paddingLeft: '20px', color: '#4b5563', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <li>Purchase Price</li>
+                                <li>Down Payment (%)</li>
+                                <li>Est. Closing Date</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px', textTransform: 'uppercase' }}>Financing Terms</h4>
+                            <ul style={{ margin: 0, paddingLeft: '20px', color: '#4b5563', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <li>Interest Rate (%)</li>
+                                <li>Loan Term (Years/Months)</li>
+                                <li>Payment Structure</li>
+                                <li>Balloon Term (if applicable)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px', textTransform: 'uppercase' }}>Security & Position</h4>
+                            <ul style={{ margin: 0, paddingLeft: '20px', color: '#4b5563', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <li>Security Instrument</li>
+                                <li>Lien Position (1st/2nd)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px', textTransform: 'uppercase' }}>Risk & Flexibility</h4>
+                            <ul style={{ margin: 0, paddingLeft: '20px', color: '#4b5563', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <li>Grace Period</li>
+                                <li>Prepayment Rules</li>
+                                <li>Late Fee Terms</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Contract Guide */}
                 <div style={{ padding: '24px', backgroundColor: '#f0fdf4', borderRadius: '16px', border: '1px solid #dcfce7', marginBottom: '32px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#166534', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -77,7 +121,7 @@ const VisitAcceptanceModal: React.FC<VisitAcceptanceModalProps> = ({ isOpen, onC
                     </Button>
                 </div>
             </div>
-        </Modal>
+        </Modal >
     );
 };
 

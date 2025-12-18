@@ -77,16 +77,18 @@ const Marketplace: React.FC = () => {
             {/* Header */}
             <TopBar />
 
-            {/* Filter Bar */}
-            <div style={{ padding: '20px 40px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '12px' }}>
-                {['Address', 'Price', 'Down Payment', 'Beds & Baths', 'Surface', 'Home Type', 'Contract Type'].map((filter) => (
-                    <div key={filter} style={{
-                        border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px 16px',
-                        fontSize: '14px', color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: '100px'
-                    }}>
-                        {filter}
-                    </div>
-                ))}
+            {/* Filter Bar and Toggle */}
+            <div style={{ padding: '20px 40px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    {['Address', 'Price', 'Down Payment', 'Beds & Baths', 'Surface', 'Home Type', 'Contract Type'].map((filter) => (
+                        <div key={filter} style={{
+                            border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px 16px',
+                            fontSize: '14px', color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: '100px'
+                        }}>
+                            {filter}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Listing Grid */}
