@@ -19,7 +19,7 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose }) => {
 
     // Mock calculations
     const noteSize = 455000;
-    const interestRate = 5.0; // %
+    // const interestRate = 5.0; // %
     const share = investmentAmount / noteSize;
     // Simple Interest P&I estimate (Mock: Pro-rata of $6000 total payment)
     const totalMonthlyPayment = 6000;

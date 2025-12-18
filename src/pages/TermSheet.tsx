@@ -2,7 +2,7 @@ import React from 'react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { FileText, CheckCircle, Download } from 'lucide-react';
+import { CheckCircle, Download } from 'lucide-react';
 
 const TermSheet: React.FC = () => {
     const navigate = useNavigate();

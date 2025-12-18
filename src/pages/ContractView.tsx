@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { PenTool, CheckCircle, ShieldCheck } from 'lucide-react';
+import { PenTool, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ContractView: React.FC = () => {

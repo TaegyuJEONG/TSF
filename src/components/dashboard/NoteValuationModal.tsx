@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import { X, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react';
 import Button from '../ui/Button';
 
 interface NoteValuationModalProps {
@@ -9,7 +9,7 @@ interface NoteValuationModalProps {
     upb: number; // Unpaid Principal Balance
 }
 
-const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList, upb }) => {
+const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList }) => {
     const [step, setStep] = useState<'pricing' | 'cashout' | 'processing' | 'confirmed'>('pricing');
     const [selectedPreset, setSelectedPreset] = useState<'fast' | 'market' | 'premium' | 'custom' | null>(null);
     const [customPrice, setCustomPrice] = useState<string>('500000');
@@ -33,24 +33,14 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
 
     const getCurrentPrice = () => {
         if (selectedPreset === 'custom') return parseInt(customPrice.replace(/,/g, '')) || 0;
-        if (selectedPreset && presets[selectedPreset]) return presets[selectedPreset].price;
+        // Since we handled 'custom' above, selectedPreset here is narrowed to the preset keys
+        if (selectedPreset && presets[selectedPreset as keyof typeof presets]) return presets[selectedPreset as keyof typeof presets].price;
         return 0;
     };
 
     const currentPrice = getCurrentPrice();
     const tokenizationFee = Math.round(currentPrice * 0.005); // 0.5%
     const successFee = Math.round(currentPrice * 0.01); // 1%
-
-    // Mock Yield Calculation for Custom Price
-    const calculateYield = (price: number) => {
-        if (price === 0) return '0.0%';
-        const baseYield = 6.0;
-        const basePrice = 500000;
-        const implied = baseYield * (basePrice / price);
-        return implied.toFixed(1) + '%';
-    };
-
-    const currentYield = selectedPreset === 'custom' ? calculateYield(currentPrice) : (selectedPreset ? presets[selectedPreset].yield : '0.0%');
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 

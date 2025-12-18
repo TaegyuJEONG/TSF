@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/ui/Card';
+
 import { ChevronLeft, CheckCircle, Briefcase, DollarSign, PieChart, Shield, Calendar, Percent } from 'lucide-react';
 
 const ProfileSummary: React.FC = () => {

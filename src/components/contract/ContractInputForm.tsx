@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, Select } from '../ui/Input';
 import Button from '../ui/Button';
@@ -59,7 +60,7 @@ interface ContractInputFormProps {
     onClose: () => void;
 }
 
-const ContractInputForm: React.FC<ContractInputFormProps> = ({ data, onChange, onGenerate, calculated, onClose }) => {
+const ContractInputForm: React.FC<ContractInputFormProps> = ({ data, onChange, onGenerate, onClose }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);

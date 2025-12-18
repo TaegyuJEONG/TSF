@@ -1,29 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Wallet, ExternalLink, X, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Wallet, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useWallet } from '../hooks/useWallet';
 
 const InvestorConnectWallet = () => {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [walletAddress, setWalletAddress] = useState('');
-    const [isConnected, setIsConnected] = useState(false);
+    const {
+        address,
+        isConnected,
+        isConnecting,
+        error,
+        connect,
+        isMantleNetwork,
+        switchToMantle
+    } = useWallet();
 
     const handleConnect = () => {
         setIsModalOpen(true);
     };
 
-    const handleWalletSelect = (_walletName: string) => {
-        // Mock connection
-        setTimeout(() => {
-            setWalletAddress('0xA3f...92C');
-            setIsConnected(true);
+    const handleWalletSelect = async (walletName: string) => {
+        if (walletName === 'MetaMask') {
+            await connect();
             setIsModalOpen(false);
-        }, 500);
+        } else {
+            // Placeholder for other wallets if needed in future
+            alert(`${walletName} support coming soon!`);
+        }
     };
 
     const handleNext = () => {
-        navigate('/investor/identity-verification');
+        if (isConnected && isMantleNetwork) {
+            navigate('/investor/identity-verification');
+        }
     };
+
+    // Auto-close modal if connected
+    useEffect(() => {
+        if (isConnected) {
+            setIsModalOpen(false);
+        }
+    }, [isConnected]);
 
     return (
         <div style={{
@@ -82,9 +100,27 @@ const InvestorConnectWallet = () => {
                         Wallet is used for ownership records and distributions only.
                     </p>
 
+                    {error && (
+                        <div style={{
+                            backgroundColor: '#FEF2F2',
+                            border: '1px solid #FECACA',
+                            borderRadius: 'var(--border-radius-md)',
+                            padding: '12px',
+                            marginBottom: '24px',
+                            display: 'flex',
+                            gap: '10px',
+                            alignItems: 'start',
+                            textAlign: 'left'
+                        }}>
+                            <AlertCircle size={20} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <span style={{ fontSize: '14px', color: '#991B1B' }}>{error}</span>
+                        </div>
+                    )}
+
                     {!isConnected ? (
                         <button
                             onClick={handleConnect}
+                            disabled={isConnecting}
                             style={{
                                 width: '100%',
                                 backgroundColor: 'var(--color-primary-900)',
@@ -94,15 +130,25 @@ const InvestorConnectWallet = () => {
                                 padding: '14px',
                                 fontSize: '16px',
                                 fontWeight: 500,
-                                cursor: 'pointer',
+                                cursor: isConnecting ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '10px'
+                                gap: '10px',
+                                opacity: isConnecting ? 0.7 : 1
                             }}
                         >
-                            <Wallet size={20} />
-                            Connect Wallet
+                            {isConnecting ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" />
+                                    Connecting...
+                                </>
+                            ) : (
+                                <>
+                                    <Wallet size={20} />
+                                    Connect Wallet
+                                </>
+                            )}
                         </button>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -117,14 +163,45 @@ const InvestorConnectWallet = () => {
                                 textAlign: 'left'
                             }}>
                                 <CheckCircle size={24} color="#16A34A" />
-                                <div>
+                                <div style={{ overflow: 'hidden' }}>
                                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#14532D' }}>Wallet connected</div>
-                                    <div style={{ fontSize: '13px', color: '#166534', fontFamily: 'monospace' }}>{walletAddress}</div>
+                                    <div style={{ fontSize: '13px', color: '#166534', fontFamily: 'monospace', textOverflow: 'ellipsis', overflow: 'hidden' }}>{address}</div>
                                 </div>
                             </div>
 
+                            {!isMantleNetwork && (
+                                <div style={{
+                                    backgroundColor: '#FFF7ED',
+                                    border: '1px solid #FFEDD5',
+                                    borderRadius: 'var(--border-radius-md)',
+                                    padding: '16px',
+                                    textAlign: 'left'
+                                }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#9A3412' }}>Wrong Network</h4>
+                                    <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#C2410C' }}>
+                                        Please switch to Mantle Testnet to continue.
+                                    </p>
+                                    <button
+                                        onClick={switchToMantle}
+                                        style={{
+                                            backgroundColor: '#EA580C',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '6px',
+                                            fontSize: '13px',
+                                            fontWeight: 500,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Switch to Mantle Testnet
+                                    </button>
+                                </div>
+                            )}
+
                             <button
                                 onClick={handleNext}
+                                disabled={!isMantleNetwork}
                                 style={{
                                     width: '100%',
                                     backgroundColor: 'var(--color-primary-900)',
@@ -134,7 +211,8 @@ const InvestorConnectWallet = () => {
                                     padding: '14px',
                                     fontSize: '16px',
                                     fontWeight: 500,
-                                    cursor: 'pointer'
+                                    cursor: !isMantleNetwork ? 'not-allowed' : 'pointer',
+                                    opacity: !isMantleNetwork ? 0.5 : 1
                                 }}
                             >
                                 Continue
@@ -184,9 +262,9 @@ const InvestorConnectWallet = () => {
                         </div>
                         <div style={{ padding: '16px' }}>
                             {[
-                                { name: 'MetaMask', color: '#F16822' }, // Orange
-                                { name: 'Coinbase Wallet', color: '#0052FF' }, // Blue
-                                { name: 'WalletConnect', color: '#3B99FC' } // Light Blue
+                                { name: 'MetaMask', color: '#F16822' },
+                                { name: 'Coinbase Wallet', color: '#0052FF' },
+                                { name: 'WalletConnect', color: '#3B99FC' }
                             ].map((wallet) => (
                                 <button
                                     key={wallet.name}
