@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
+import { WalletProvider } from './contexts/WalletContext';
 import Dashboard from './pages/Dashboard';
 import NewRequest from './pages/NewRequest';
 import TermSheet from './pages/TermSheet';
@@ -33,49 +34,46 @@ import InvestorListingDetail from './pages/InvestorListingDetail';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="new-request" element={<NewRequest />} />
-          <Route path="term-sheet" element={<TermSheet />} />
-          <Route path="contract" element={<Contract />} />
-          <Route path="contracts" element={<ContractsList />} />
-          <Route path="contract-view" element={<ContractView />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="listed-home" element={<SellerListedHome />} />
-          <Route path="visit-requests" element={<VisitRequests />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="merkle-record" element={<MerkleRecord />} />
-          <Route path="note-overview" element={<NoteOverview />} />
-        </Route>
-        <Route path="/create-profile" element={<CreateProfile />} />
-        <Route path="/select-role" element={<SelectRole />} />
-        <Route path="/buying-power" element={<BuyingPowerCheck />} />
-        <Route path="/income-verification" element={<IncomeVerification />} />
-        <Route path="/buyer-preferences" element={<BuyerPreferences />} />
-        <Route path="/profile-summary" element={<ProfileSummary />} />
-        <Route path="/owner-onboarding" element={<OwnerOnboarding />} />
-        <Route path="/owner-verification" element={<OwnerVerification />} />
-        <Route path="/property-photos" element={<PropertyPhotos />} />
-        <Route path="/seller-financing-terms" element={<SellerFinancingTerms />} />
-        <Route path="/listing-preview" element={<ListingPreview />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/listing-detail" element={<ListingDetail />} />
-        <Route path="/investor/listing/:id" element={<InvestorListingDetail />} />
+    <WalletProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="new-request" element={<NewRequest />} />
+            <Route path="term-sheet" element={<TermSheet />} />
+            <Route path="contract" element={<Contract />} />
+            <Route path="contracts" element={<ContractsList />} />
+            <Route path="contract-view" element={<ContractView />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="listed-home" element={<SellerListedHome />} />
+            <Route path="visit-requests" element={<VisitRequests />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="merkle-record" element={<MerkleRecord />} />
+            <Route path="note-overview" element={<NoteOverview />} />
+          </Route>
+          <Route path="/create-profile" element={<CreateProfile />} />
+          <Route path="/select-role" element={<SelectRole />} />
+          <Route path="/buying-power" element={<BuyingPowerCheck />} />
+          <Route path="/income-verification" element={<IncomeVerification />} />
+          <Route path="/buyer-preferences" element={<BuyerPreferences />} />
+          <Route path="/profile-summary" element={<ProfileSummary />} />
+          <Route path="/owner-onboarding" element={<OwnerOnboarding />} />
+          <Route path="/owner-verification" element={<OwnerVerification />} />
+          <Route path="/property-photos" element={<PropertyPhotos />} />
+          <Route path="/seller-financing-terms" element={<SellerFinancingTerms />} />
+          <Route path="/listing-preview" element={<ListingPreview />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/listing-detail" element={<ListingDetail />} />
+          <Route path="/investor/listing/:id" element={<InvestorListingDetail />} />
 
-        {/* Investor Onboarding Flows */}
-        <Route path="/investor-marketplace" element={<InvestorMarketplace />} />
-        <Route path="/investor/connect-wallet" element={<InvestorConnectWallet />} />
-        <Route path="/investor/identity-verification" element={<InvestorIdentityVerification />} />
-        <Route path="/investor/verification-complete" element={<InvestorVerificationComplete />} />
-
-      </Routes>
-
-
-
-
-    </BrowserRouter>
+          {/* Investor Onboarding Flows */}
+          <Route path="/investor-marketplace" element={<InvestorMarketplace />} />
+          <Route path="/investor/connect-wallet" element={<InvestorConnectWallet />} />
+          <Route path="/investor/identity-verification" element={<InvestorIdentityVerification />} />
+          <Route path="/investor/verification-complete" element={<InvestorVerificationComplete />} />
+        </Routes>
+      </BrowserRouter>
+    </WalletProvider>
   );
 }
 

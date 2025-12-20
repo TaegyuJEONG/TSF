@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Button from '../ui/Button';
 import confetti from 'canvas-confetti';
-// import { ChevronDown, ChevronRight, FileText, CheckCircle } from 'lucide-react';
+import { generateContractHash, generateCreditHash } from '../../utils/crypto';
+import { submitCustodialTransaction, type TransactionResult } from '../../utils/blockchain';
 
 interface DocumentItemProps {
     title: string;
@@ -81,7 +82,9 @@ interface ContractDocumentListProps {
 }
 
 const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose }) => {
-    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'registering' | 'completed'>('pending');
+    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'registering' | 'completed' | 'error'>('pending');
+    const [txResult, setTxResult] = useState<TransactionResult | null>(null);
+    const [errorMsg, setErrorMsg] = useState<string>("");
 
     const documents = [
         "Purchase Agreement",
@@ -91,22 +94,54 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
         "Amortization Schedule"
     ];
 
-    const handlePayment = () => {
-        // 1. Fire Confetti
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+    const handlePayment = async () => {
+        try {
+            setPaymentStatus('registering');
+            setErrorMsg("");
 
-        // 2. Set status to registering
-        setPaymentStatus('registering');
+            // 1. Prepare Data
+            const contractData = {
+                documents,
+                summary,
+                version: "1.0",
+                timestamp: Date.now()
+            };
 
-        // 3. Mock Blockchain Delay -> Complete
-        setTimeout(() => {
+            // Mock Credit Summary (No PII)
+            const creditSummary = {
+                verified: true,
+                scoreTier: "Excellent",
+                checkDate: new Date().toISOString().split('T')[0],
+                provider: "TrustPartnerAuth"
+            };
+
+            // 2. Hash Data
+            const contractHash = generateContractHash(contractData);
+            const creditHash = generateCreditHash(creditSummary);
+
+            console.log("Anchoring Hashes:", { contractHash, creditHash });
+
+            // 3. Submit Transaction
+            const result = await submitCustodialTransaction(contractHash, creditHash);
+
+            setTxResult(result);
             setPaymentStatus('completed');
+
+            // 4. Fire Confetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
             if (onComplete) onComplete();
-        }, 3000); // 3 seconds delay
+
+        } catch (err: unknown) {
+            console.error("Payment Error:", err);
+            setPaymentStatus('error');
+            const message = err instanceof Error ? err.message : "Transaction failed";
+            setErrorMsg(message);
+        }
     };
 
     return (
@@ -182,7 +217,22 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                 </Button>
             )}
 
-            {paymentStatus === 'completed' && (
+            {paymentStatus === 'error' && (
+                <div>
+                    <div style={{ color: '#ef4444', marginBottom: '12px', fontSize: '14px', textAlign: 'center' }}>
+                        {errorMsg}
+                    </div>
+                    <Button
+                        onClick={() => setPaymentStatus('pending')} // Retry
+                        fullWidth
+                        style={{ height: '52px', backgroundColor: '#dc2626', color: 'white', fontSize: '16px', fontWeight: 600 }}
+                    >
+                        Retry Payment
+                    </Button>
+                </div>
+            )}
+
+            {paymentStatus === 'completed' && txResult && (
                 <div>
                     <div style={{
                         marginTop: '0px',
@@ -203,20 +253,25 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: '13px', color: '#374151' }}>Transaction Hash</span>
-                                <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#6b7280', backgroundColor: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
-                                    0x7f9...3a1
-                                </span>
+                                <a
+                                    href={`https://explorer.sepolia.mantle.xyz/tx/${txResult.hash}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ fontSize: '12px', fontFamily: 'monospace', color: '#2563eb', backgroundColor: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bbf7d0', textDecoration: 'none', cursor: 'pointer' }}
+                                >
+                                    {txResult.hash.slice(0, 6)}...{txResult.hash.slice(-4)}
+                                </a>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '13px', color: '#374151' }}>RWA Contract Address</span>
+                                <span style={{ fontSize: '13px', color: '#374151' }}>Recorded By</span>
                                 <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#6b7280', backgroundColor: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
-                                    0x8a2...9c4
+                                    Trust Partner
                                 </span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: '13px', color: '#374151' }}>Network Status</span>
                                 <span style={{ fontSize: '12px', fontWeight: 500, color: '#16a34a' }}>
-                                    ● Confirmed on Testnet
+                                    ● Confirmed on Mantle Testnet
                                 </span>
                             </div>
                         </div>
@@ -227,7 +282,7 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                         fullWidth
                         style={{ height: '52px', backgroundColor: '#22c55e', color: 'white', fontSize: '16px', fontWeight: 600, cursor: 'default', border: 'none' }}
                     >
-                        Completed
+                        Success
                     </Button>
                 </div>
             )}

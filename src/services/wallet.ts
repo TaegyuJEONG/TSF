@@ -97,4 +97,25 @@ export class WalletService {
         if (!win.ethereum) return null;
         return new BrowserProvider(win.ethereum);
     }
+
+    /**
+     * Revokes permissions to force a real disconnect.
+     * This will cause MetaMask to prompt for connection again next time.
+     */
+    static async disconnect(): Promise<void> {
+        if (!this.hasProvider()) return;
+        const win = window as WindowWithEthereum;
+
+        try {
+            await win.ethereum.request({
+                method: 'wallet_revokePermissions',
+                params: [{
+                    eth_accounts: {}
+                }]
+            });
+        } catch (error) {
+            console.error('Failed to revoke permissions:', error);
+            // Even if it fails, we should let the app clear its state
+        }
+    }
 }
