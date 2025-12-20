@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Button from '../ui/Button';
 import confetti from 'canvas-confetti';
-import { generateContractHash, generateCreditHash } from '../../utils/crypto';
-import { submitCustodialTransaction, type TransactionResult } from '../../utils/blockchain';
+import { canonicalStringify, sha256 } from '../../utils/crypto';
+import { submitCustodialTransaction, verifyTransaction, type TransactionResult } from '../../utils/blockchain';
+import { type ContractData } from './ContractInputForm';
+import { Download, ExternalLink, Copy, CheckCircle } from 'lucide-react';
 
 interface DocumentItemProps {
     title: string;
@@ -79,12 +81,17 @@ interface ContractDocumentListProps {
         loanAmount: number;
     };
     onClose: () => void;
+    data: ContractData;
 }
 
-const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose }) => {
+const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose, data }) => {
     const [paymentStatus, setPaymentStatus] = useState<'pending' | 'registering' | 'completed' | 'error'>('pending');
     const [txResult, setTxResult] = useState<TransactionResult | null>(null);
     const [errorMsg, setErrorMsg] = useState<string>("");
+
+    // Verification State
+    const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'match' | 'mismatch' | null>(null);
+    const [auditData, setAuditData] = useState<any>(null);
 
     const documents = [
         "Purchase Agreement",
@@ -94,40 +101,122 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
         "Amortization Schedule"
     ];
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        // Could show a toast here
+    };
+
+    const handleDownloadAudit = () => {
+        if (!auditData) return;
+        const blob = new Blob([JSON.stringify(auditData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit-package-${auditData.anchorHash.slice(0, 8)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     const handlePayment = async () => {
         try {
             setPaymentStatus('registering');
             setErrorMsg("");
+            setVerificationStatus(null);
+            setAuditData(null);
 
-            // 1. Prepare Data
-            const contractData = {
-                documents,
-                summary,
+            // 1. Build Mock Contract Data (State + Defaults)
+            const mockContractData = {
+                property: {
+                    address: "5931 Abernathy Dr, Los Angeles, CA 90045",
+                    price: summary.price
+                },
+                buyer: data.buyer || { name: "Unknown", email: "unknown@example.com" },
+                terms: {
+                    downPayment: summary.downPayment,
+                    interestRate: parseFloat(data.interestRate),
+                    term: data.term,
+                    termUnit: data.termUnit,
+                    paymentStructure: data.paymentStructure,
+                    securityInstrument: data.securityInstrument,
+                    lienPosition: data.lienPosition,
+                    gracePeriodDays: parseInt(data.gracePeriod),
+                    prepaymentAllowed: data.prepaymentAllowed === 'Yes',
+                    prepaymentPenalty: data.prepaymentPenalty
+                },
+                calculated: {
+                    monthlyPayment: summary.monthlyPayment,
+                    totalRepayment: summary.totalRepayment,
+                    contractFee: summary.contractFee
+                },
+                generatedDocs: documents
+            };
+
+            // 2. Build Mock Credit Assessment
+            const mockCreditAssessment = {
+                bureauScore: 720,
+                dti: 0.28,
+                incomeBand: "100k-150k",
+                riskTier: "A",
+                decision: "Approve",
+                onChainCheck: true,
+                assessmentTimestamp: new Date().toISOString()
+            };
+
+            // 3. Compute Hashes (Deterministic)
+            const contractHash = await sha256(canonicalStringify(mockContractData));
+            const creditHash = await sha256(canonicalStringify(mockCreditAssessment));
+
+            console.log("Computed Hashes:", { contractHash, creditHash });
+
+            // 4. Create Anchor Payload
+            const anchorPayload = {
                 version: "1.0",
-                timestamp: Date.now()
+                algo: "sha256",
+                chainId: 5003, // Mantle Sepolia
+                contractHash,
+                creditHash,
+                timestamp: new Date().toISOString(),
+                propertyId: "prop_12345"
             };
 
-            // Mock Credit Summary (No PII)
-            const creditSummary = {
-                verified: true,
-                scoreTier: "Excellent",
-                checkDate: new Date().toISOString().split('T')[0],
-                provider: "TrustPartnerAuth"
-            };
+            const anchorPayloadString = canonicalStringify(anchorPayload);
+            const anchorHash = await sha256(anchorPayloadString);
 
-            // 2. Hash Data
-            const contractHash = generateContractHash(contractData);
-            const creditHash = generateCreditHash(creditSummary);
-
-            console.log("Anchoring Hashes:", { contractHash, creditHash });
-
-            // 3. Submit Transaction
-            const result = await submitCustodialTransaction(contractHash, creditHash);
-
+            // 5. Submit Transaction (Anchor Payload)
+            const result = await submitCustodialTransaction(anchorPayloadString);
             setTxResult(result);
+
+            // 6. Verify Transaction (Read back from chain)
+            setVerificationStatus('verifying');
+            const onChainData = await verifyTransaction(result.hash);
+
+            // Recompute local hash to verify integrity
+            const recomputedAnchorHash = await sha256(onChainData);
+
+            // Compare
+            const isMatch = (recomputedAnchorHash === anchorHash) && (onChainData === anchorPayloadString);
+            setVerificationStatus(isMatch ? 'match' : 'mismatch');
+
+
+            // 7. Prepare Audit Package
+            setAuditData({
+                mockContractData,
+                mockCreditAssessment,
+                anchorPayload,
+                contractHash,
+                creditHash,
+                anchorHash,
+                txHash: result.hash,
+                chainId: 5003,
+                network: "Mantle Sepolia Testnet",
+                verification: isMatch ? "MATCH" : "MISMATCH"
+            });
+
             setPaymentStatus('completed');
 
-            // 4. Fire Confetti
+            // 8. Fire Confetti
             confetti({
                 particleCount: 150,
                 spread: 70,
@@ -139,6 +228,7 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
         } catch (err: unknown) {
             console.error("Payment Error:", err);
             setPaymentStatus('error');
+            setVerificationStatus('mismatch');
             const message = err instanceof Error ? err.message : "Transaction failed";
             setErrorMsg(message);
         }
@@ -232,7 +322,7 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                 </div>
             )}
 
-            {paymentStatus === 'completed' && txResult && (
+            {paymentStatus === 'completed' && txResult && auditData && (
                 <div>
                     <div style={{
                         marginTop: '0px',
@@ -242,38 +332,105 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                         border: '1px solid #bbf7d0',
                         borderRadius: '8px'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M22 4L12 14.01L9 11.01" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                        {/* Success Header */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #bbf7d0' }}>
+                            <CheckCircle size={20} color="#16a34a" />
                             <span style={{ fontSize: '15px', fontWeight: 600, color: '#166534' }}>RWA Contract Registered</span>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '13px', color: '#374151' }}>Transaction Hash</span>
-                                <a
-                                    href={`https://explorer.sepolia.mantle.xyz/tx/${txResult.hash}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{ fontSize: '12px', fontFamily: 'monospace', color: '#2563eb', backgroundColor: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bbf7d0', textDecoration: 'none', cursor: 'pointer' }}
-                                >
-                                    {txResult.hash.slice(0, 6)}...{txResult.hash.slice(-4)}
-                                </a>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '13px', color: '#374151' }}>Recorded By</span>
-                                <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#6b7280', backgroundColor: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
-                                    Trust Partner
+                        {/* Audit Verification Section */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Audit Verification</span>
+                                <span style={{
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    color: verificationStatus === 'match' ? '#16a34a' : '#dc2626',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}>
+                                    {verificationStatus === 'match' ? (
+                                        <>✅ MATCH</>
+                                    ) : (
+                                        <>❌ MISMATCH</>
+                                    )}
                                 </span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '13px', color: '#374151' }}>Network Status</span>
-                                <span style={{ fontSize: '12px', fontWeight: 500, color: '#16a34a' }}>
-                                    ● Confirmed on Mantle Testnet
-                                </span>
+
+                            {/* Hashes */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.6)', padding: '4px 8px', borderRadius: '4px' }}>
+                                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Contract Hash</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <code style={{ fontSize: '11px', color: '#374151' }}>{auditData.contractHash.slice(0, 8)}...{auditData.contractHash.slice(-6)}</code>
+                                        <Copy size={12} color="#9ca3af" style={{ cursor: 'pointer' }} onClick={() => copyToClipboard(auditData.contractHash)} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.6)', padding: '4px 8px', borderRadius: '4px' }}>
+                                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Credit Hash</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <code style={{ fontSize: '11px', color: '#374151' }}>{auditData.creditHash.slice(0, 8)}...{auditData.creditHash.slice(-6)}</code>
+                                        <Copy size={12} color="#9ca3af" style={{ cursor: 'pointer' }} onClick={() => copyToClipboard(auditData.creditHash)} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#dcfce7', padding: '4px 8px', borderRadius: '4px', border: '1px solid #86efac' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#166534' }}>Anchor Hash</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <code style={{ fontSize: '11px', color: '#166534', fontWeight: 600 }}>{auditData.anchorHash.slice(0, 8)}...{auditData.anchorHash.slice(-6)}</code>
+                                        <Copy size={12} color="#166534" style={{ cursor: 'pointer' }} onClick={() => copyToClipboard(auditData.anchorHash)} />
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                            <a
+                                href={`https://explorer.sepolia.mantle.xyz/tx/${txResult.hash}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    padding: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: 500,
+                                    color: '#2563eb',
+                                    backgroundColor: 'white',
+                                    borderRadius: '6px',
+                                    border: '1px solid #bfdbfe',
+                                    textDecoration: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <ExternalLink size={14} />
+                                Verify on MantleScan
+                            </a>
+                            <button
+                                onClick={handleDownloadAudit}
+                                style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    padding: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: 500,
+                                    color: '#374151',
+                                    backgroundColor: 'white',
+                                    borderRadius: '6px',
+                                    border: '1px solid #d1d5db',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <Download size={14} />
+                                Download Audit Pkg
+                            </button>
                         </div>
                     </div>
 
@@ -282,7 +439,7 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                         fullWidth
                         style={{ height: '52px', backgroundColor: '#22c55e', color: 'white', fontSize: '16px', fontWeight: 600, cursor: 'default', border: 'none' }}
                     >
-                        Success
+                        Process Complete
                     </Button>
                 </div>
             )}

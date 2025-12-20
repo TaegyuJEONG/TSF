@@ -10,14 +10,12 @@ export interface TransactionResult {
 }
 
 /**
- * Submits a custodial transaction to anchor contract data on-chain.
- * @param contractHash The hash of the contract documents.
- * @param creditHash The hash of the credit summary.
+ * Submits a custodial transaction to anchor data on-chain.
+ * @param anchorPayloadJson The canonical JSON string of the anchor payload.
  * @returns Promise resolving to the transaction result.
  */
 export const submitCustodialTransaction = async (
-    contractHash: string,
-    creditHash: string
+    anchorPayloadJson: string
 ): Promise<TransactionResult> => {
     try {
         const privateKey = import.meta.env.VITE_TRUST_PARTNER_PRIVATE_KEY;
@@ -34,23 +32,13 @@ export const submitCustodialTransaction = async (
 
         console.log("Preparing custodial transaction from:", wallet.address);
 
-        // Construct Data Payload
-        const payload = {
-            contractHash,
-            creditHash,
-            timestamp: new Date().toISOString(),
-            documentType: "RWA_CONTRACT",
-            action: "ANCHOR_PROOF"
-        };
-
         // Encode payload as hex string for data field
-        // formatting as utf8 bytes -> hex
-        const dataHex = ethers.hexlify(ethers.toUtf8Bytes(JSON.stringify(payload)));
+        const dataHex = ethers.hexlify(ethers.toUtf8Bytes(anchorPayloadJson));
 
         // Create Transaction
         // Sending 0 ETH, just anchoring data
         const tx = await wallet.sendTransaction({
-            to: wallet.address, // Sending to self effectively, or could be a burn address. Self is safer for history.
+            to: wallet.address, // Sending to self
             value: 0,
             data: dataHex
         });
@@ -73,6 +61,29 @@ export const submitCustodialTransaction = async (
 
     } catch (error) {
         console.error("Custodial Transaction Failed:", error);
+        throw error;
+    }
+};
+
+/**
+ * Verifies a transaction by fetching it and returning the decoded input data.
+ * @param txHash The transaction hash to verify.
+ * @returns The anchored data string (utf8).
+ */
+export const verifyTransaction = async (txHash: string): Promise<string> => {
+    try {
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        const tx = await provider.getTransaction(txHash);
+
+        if (!tx) {
+            throw new Error("Transaction not found");
+        }
+
+        // Decode input data
+        const data = ethers.toUtf8String(tx.data);
+        return data;
+    } catch (error) {
+        console.error("Verification Failed:", error);
         throw error;
     }
 };

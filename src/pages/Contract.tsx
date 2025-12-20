@@ -156,6 +156,7 @@ const Contract: React.FC = () => {
                                     loanAmount: loanAmount
                                 }}
                                 onClose={handleClose}
+                                data={contractData}
                             />
                         )}
                     </div>
