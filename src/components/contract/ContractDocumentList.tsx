@@ -3,6 +3,7 @@ import Button from '../ui/Button';
 import confetti from 'canvas-confetti';
 import { canonicalStringify, sha256 } from '../../utils/crypto';
 import { submitCustodialTransaction, verifyTransaction, type TransactionResult } from '../../utils/blockchain';
+import { saveContractSnapshot, clearPaymentEvents } from '../../services/paymentService';
 import { type ContractData } from './ContractInputForm';
 import { Download, ExternalLink, Copy, CheckCircle } from 'lucide-react';
 
@@ -71,7 +72,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ title }) => {
 };
 
 interface ContractDocumentListProps {
-    onComplete: () => void;
+    onComplete: (data: { txResult: TransactionResult, auditData: any }) => void;
     summary: {
         monthlyPayment: number;
         totalRepayment: number;
@@ -82,16 +83,25 @@ interface ContractDocumentListProps {
     };
     onClose: () => void;
     data: ContractData;
+    initialCompletionData?: {
+        txResult: TransactionResult;
+        auditData: any;
+    } | null;
 }
 
-const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose, data }) => {
-    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'registering' | 'completed' | 'error'>('pending');
-    const [txResult, setTxResult] = useState<TransactionResult | null>(null);
+const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose, data, initialCompletionData }) => {
+    // If we have initial data, we are completed.
+    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'registering' | 'completed' | 'error'>(
+        initialCompletionData ? 'completed' : 'pending'
+    );
+    const [txResult, setTxResult] = useState<TransactionResult | null>(initialCompletionData?.txResult || null);
     const [errorMsg, setErrorMsg] = useState<string>("");
 
     // Verification State
-    const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'match' | 'mismatch' | null>(null);
-    const [auditData, setAuditData] = useState<any>(null);
+    const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'match' | 'mismatch' | null>(
+        initialCompletionData ? 'match' : null
+    );
+    const [auditData, setAuditData] = useState<any>(initialCompletionData?.auditData || null);
 
     const documents = [
         "Purchase Agreement",
@@ -200,6 +210,10 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
             setVerificationStatus(isMatch ? 'match' : 'mismatch');
 
 
+            // ... existing imports
+
+            // ... existing code
+
             // 7. Prepare Audit Package
             setAuditData({
                 mockContractData,
@@ -214,6 +228,25 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                 verification: isMatch ? "MATCH" : "MISMATCH"
             });
 
+            // --- SAVE SNAPSHOT FOR PAYMENTS PAGE ---
+            // Construct the snapshot reference expected by paymentService
+            const newSnapshot: any = { // Utilizing 'any' temporarily to match ContractSnapshotRef structure easily
+                schemaVersion: "contract_snapshot_ref_v1",
+                contractId: `contract_${Date.now()}`,
+                propertyId: anchorPayload.propertyId,
+                chainId: 5003,
+                contractHash,
+                creditHash,
+                anchorHash,
+                contractTxHash: result.hash,
+                anchoredAt: new Date().toISOString(),
+                source: "LIVE"
+            };
+            saveContractSnapshot(newSnapshot);
+            // Clear old payment history to start fresh for the new contract
+            clearPaymentEvents();
+            // ---------------------------------------
+
             setPaymentStatus('completed');
 
             // 8. Fire Confetti
@@ -223,7 +256,21 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                 origin: { y: 0.6 }
             });
 
-            if (onComplete) onComplete();
+            if (onComplete) onComplete({
+                txResult: result, // result is from scope above
+                auditData: {
+                    mockContractData,
+                    mockCreditAssessment,
+                    anchorPayload,
+                    contractHash,
+                    creditHash,
+                    anchorHash,
+                    txHash: result.hash,
+                    chainId: 5003,
+                    network: "Mantle Sepolia Testnet",
+                    verification: isMatch ? "MATCH" : "MISMATCH"
+                }
+            });
 
         } catch (err: unknown) {
             console.error("Payment Error:", err);

@@ -6,12 +6,29 @@ import ContractInputForm, { type ContractData } from '../components/contract/Con
 import ContractDocumentList from '../components/contract/ContractDocumentList';
 
 const Contract: React.FC = () => {
+    // Persistence Key
+    const STORAGE_KEY = 'tsf_contract_page_state_v1';
+
+    // Lazy Initializers
+    const loadState = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : null;
+        } catch (e) {
+            console.error("Failed to load contract state", e);
+            return null;
+        }
+    };
+
+    const savedState = loadState();
+
     // UI State
-    const [step, setStep] = useState<'input' | 'preview'>('input');
-    const [showForm, setShowForm] = useState(false); // To toggle the right side initially
+    const [step, setStep] = useState<'input' | 'preview'>(savedState?.step || 'input');
+    const [showForm, setShowForm] = useState(savedState?.showForm || false);
+    const [isCompleted, setIsCompleted] = useState(savedState?.isCompleted || false);
 
     // Form State
-    const [contractData, setContractData] = useState<ContractData>({
+    const [contractData, setContractData] = useState<ContractData>(savedState?.contractData || {
         buyer: null,
         price: '475,000',
         downPaymentPercent: '30',
@@ -28,6 +45,22 @@ const Contract: React.FC = () => {
         prepaymentPenalty: false,
         confirmed: false
     });
+
+    // Success State Persistence
+    const [completionData, setCompletionData] = useState<any>(savedState?.completionData || null);
+
+    // Save State Effect
+    React.useEffect(() => {
+        const stateToSave = {
+            step,
+            showForm,
+            isCompleted,
+            contractData,
+            completionData
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    }, [step, showForm, isCompleted, contractData, completionData]);
+
 
     // Derived Calculations
     const priceNum = parseInt(contractData.price.replace(/,/g, '')) || 0;
@@ -73,13 +106,51 @@ const Contract: React.FC = () => {
         setStep('preview');
     };
 
-    const handleComplete = () => {
-        // alert("Contracts Finalized! (Mock Action)");
+    const handleComplete = (data: any) => {
+        setIsCompleted(true);
+        setCompletionData(data);
+    };
+
+    const handleNewContract = () => {
+        // Reset for new contract
+        const initialData: ContractData = {
+            buyer: null,
+            price: '475,000',
+            downPaymentPercent: '30',
+            closingDate: '',
+            interestRate: '5.5',
+            term: '30',
+            termUnit: 'years',
+            paymentStructure: 'Fully Amortized',
+            balloonTerm: '',
+            securityInstrument: 'Deed of Trust',
+            lienPosition: '1st',
+            gracePeriod: '15',
+            prepaymentAllowed: 'Yes',
+            prepaymentPenalty: false,
+            confirmed: false
+        };
+
+        setContractData(initialData);
+        setStep('input');
+        setIsCompleted(false);
+        setCompletionData(null);
+        setShowForm(true);
+
+        // Explicitly clear/overwrite storage right away to avoid race conditions
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            step: 'input',
+            showForm: true,
+            isCompleted: false,
+            contractData: initialData,
+            completionData: null
+        }));
     };
 
     const handleClose = () => {
         setShowForm(false);
-        setStep('input'); // Reset to input step when re-opening
+        setStep('input');
+        setIsCompleted(false);
     };
 
     return (
@@ -109,21 +180,21 @@ const Contract: React.FC = () => {
                     </div>
 
                     <Button
-                        onClick={() => setShowForm(true)}
-                        disabled={showForm}
+                        onClick={isCompleted ? handleNewContract : () => setShowForm(true)}
+                        disabled={showForm && !isCompleted}
                         style={{
                             width: '100%',
                             height: '48px',
                             fontSize: '15px',
                             fontWeight: 600,
                             borderRadius: '8px',
-                            backgroundColor: showForm ? '#f3f4f6' : '#000',
-                            color: showForm ? '#9ca3af' : 'white',
-                            cursor: showForm ? 'default' : 'pointer',
-                            border: showForm ? '1px solid #e5e7eb' : 'none'
+                            backgroundColor: (showForm && !isCompleted) ? '#f3f4f6' : '#000',
+                            color: (showForm && !isCompleted) ? '#9ca3af' : 'white',
+                            cursor: (showForm && !isCompleted) ? 'default' : 'pointer',
+                            border: (showForm && !isCompleted) ? '1px solid #e5e7eb' : 'none'
                         }}
                     >
-                        Build Contract
+                        {isCompleted ? "New Contract" : "Build Contract"}
                     </Button>
                 </div>
 
@@ -157,6 +228,7 @@ const Contract: React.FC = () => {
                                 }}
                                 onClose={handleClose}
                                 data={contractData}
+                                initialCompletionData={completionData}
                             />
                         )}
                     </div>

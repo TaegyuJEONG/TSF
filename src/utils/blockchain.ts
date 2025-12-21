@@ -70,20 +70,37 @@ export const submitCustodialTransaction = async (
  * @param txHash The transaction hash to verify.
  * @returns The anchored data string (utf8).
  */
+/**
+ * Verifies a transaction by fetching it and returning the decoded input data.
+ * Includes retry logic to handle transient RPC errors (e.g. block not found).
+ * @param txHash The transaction hash to verify.
+ * @returns The anchored data string (utf8).
+ */
 export const verifyTransaction = async (txHash: string): Promise<string> => {
-    try {
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        const tx = await provider.getTransaction(txHash);
+    const maxRetries = 5;
+    const baseDelay = 2000; // 2 seconds
 
-        if (!tx) {
-            throw new Error("Transaction not found");
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const provider = new ethers.JsonRpcProvider(RPC_URL);
+            const tx = await provider.getTransaction(txHash);
+
+            if (!tx) {
+                console.log(`Transaction ${txHash} not found (attempt ${i + 1}/${maxRetries}). Retrying...`);
+                await new Promise(resolve => setTimeout(resolve, baseDelay));
+                continue;
+            }
+
+            // Decode input data
+            const data = ethers.toUtf8String(tx.data);
+            return data;
+
+        } catch (error) {
+            console.warn(`Verification attempt ${i + 1}/${maxRetries} failed:`, error);
+            if (i === maxRetries - 1) throw error;
+            await new Promise(resolve => setTimeout(resolve, baseDelay));
         }
-
-        // Decode input data
-        const data = ethers.toUtf8String(tx.data);
-        return data;
-    } catch (error) {
-        console.error("Verification Failed:", error);
-        throw error;
     }
+
+    throw new Error("Transaction verification failed after retries");
 };

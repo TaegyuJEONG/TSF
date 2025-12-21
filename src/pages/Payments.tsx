@@ -1,14 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceCard from '../components/dashboard/MarketplaceCard';
-import listing1Image from '../assets/listing_1.jpg'; // Assuming we reuse the same image
-import { Pencil, Info } from 'lucide-react'; // Simulating RWA icon with Globe if needed, or custom SVG
+import listing1Image from '../assets/listing_1.jpg';
+import { Shield, CheckCircle } from 'lucide-react';
+import PaymentProcessModal from '../components/payments/PaymentProcessModal';
+import { getPaymentEvents, getContractSnapshot } from '../services/paymentService';
+import type { PaymentEvent } from '../types/payment';
 
 const Payments: React.FC = () => {
     const navigate = useNavigate();
-    const [showTooltip, setShowTooltip] = useState(false);
-    // ... (rest of code)
-    // Mock Data for Left Card (Same as SellerListedHome)
+
+    // Modal State
+    const [isPayModalOpen, setPayModalOpen] = useState(false);
+    const [selectedOverdueItem, setSelectedOverdueItem] = useState<{ amount: number, date: string } | null>(null);
+
+    // Data State
+    const [events, setEvents] = useState<PaymentEvent[]>([]);
+    const [contractSnapshot, setContractSnapshot] = useState(getContractSnapshot());
+
+    // Load Data
+    useEffect(() => {
+        setEvents(getPaymentEvents());
+        setContractSnapshot(getContractSnapshot());
+    }, []);
+
+    const handlePaymentSuccess = (newEvent: PaymentEvent) => {
+        setEvents(prev => [...prev, newEvent]); // Optimistic update, or reload
+        // In reality, service handles persistence, so we just reload from service or append
+        setEvents(getPaymentEvents());
+        setPayModalOpen(false);
+    };
+
+    const handleOpenPayModal = (amount: number, date: string) => {
+        setSelectedOverdueItem({ amount, date });
+        setPayModalOpen(true);
+    };
+
+    // --- Mock Data Construction based on stored events ---
+    // We combine "Official History" (from events) with "Projected Schedule" (mock)
+
+    // 1. Initial Schedule (Mock)
+    const initialSchedule = [
+        { date: '2025-01-22', principal: 1500, interest: 1000 },
+        { date: '2025-02-22', principal: 1500, interest: 1000 },
+        { date: '2025-03-22', principal: 1500, interest: 1000 }, // Paid in mock
+        { date: '2025-04-22', principal: 1500, interest: 1000 }, // Overdue!
+        { date: '2025-05-22', principal: 1500, interest: 1000 },
+        { date: '2025-06-22', principal: 1500, interest: 1000 },
+    ];
+
+    // 2. Merge Logic
+    // For this demo, we will check if an event exists for a month. A real app would match IDs.
+    // We just check if we have events.
+    const mergedSchedule = initialSchedule.map((item, index) => {
+        // Try to find a matching event? 
+        // For simplicity: We map index 0, 1, 2 to existing events if they exist.
+        // If index 3 (April), we force it to be Overdue unless an event exists.
+
+        // Let's rely on the events list length to mark "Paid".
+        // If we have 2 events, then Jan and Feb are paid.
+        // We need a specific strategy for the "Overdue" item to be clickable.
+
+        let status = 'Unpaid';
+        let receivedOn = '-';
+        let isOverdue = false;
+
+        // Naive matching by index for demo
+        if (index < events.length) {
+            status = 'Paid';
+            const evt = events[index]; // Assuming sort order matches schedule
+            const dateObj = new Date(evt.receivedAt);
+            receivedOn = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+        } else {
+            // Specific Mock Logic for April: Overdue
+            if (item.date === '2025-04-22') {
+                status = 'Unpaid'; // It is technically unpaid, but we mark it overdrive for logic
+                isOverdue = true;
+            }
+        }
+
+        return {
+            ...item,
+            status,
+            receivedOn,
+            isOverdue,
+            total: item.principal + item.interest
+        };
+    });
+
+
+
+    // Marketplace Card Data
     const listingData = {
         image: listing1Image,
         price: 450000,
@@ -19,31 +101,31 @@ const Payments: React.FC = () => {
         negotiable: true,
     };
 
-    // Payment History Data
-    // Mocking 12 months for the table
-    const payments = [
-        { date: '01.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '02.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '04.02.2025', principal: 1500, interest: 1000, status: 'Delayed' }, // Delayed example
-        { date: '04.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '05.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '06.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '07.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '08.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '09.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-        { date: '10.22.2025', principal: 1500, interest: 1000, status: 'On-time' },
-    ];
-
-    // Fee Calculation: 0.5% / 12 of UPB
-    // Mocking UPB roughly for display, assuming decreasing principal
-    const initialUPB = 405000; // 450k - 45k
-    const calculateFee = (upb: number) => (upb * 0.005) / 12;
+    // Logic for display:
+    // Show all PAID items + the FIRST UNPAID item (the next due).
+    // mergedSchedule matches events by index. events.length = number of paid items.
+    // So we show 0 to events.length.
+    const visibleCount = Math.min(mergedSchedule.length, events.length + 1);
+    const itemsToShow = mergedSchedule.slice(0, visibleCount);
+    const nextDueItem = mergedSchedule[events.length]; // usage: mergedSchedule[events.length] is the next unpaid one
 
     return (
         <div className="container" style={{ padding: '32px 0' }}>
+
+            {/* Payment Modal */}
+            {selectedOverdueItem && (
+                <PaymentProcessModal
+                    isOpen={isPayModalOpen}
+                    onClose={() => setPayModalOpen(false)}
+                    dueAmount={selectedOverdueItem.amount}
+                    dueDate={selectedOverdueItem.date}
+                    onPaymentSuccess={handlePaymentSuccess}
+                />
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '32px' }}>
 
-                {/* Left Column: Marketplace Card */}
+                {/* Left Column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <MarketplaceCard
                         image={listingData.image}
@@ -57,87 +139,125 @@ const Payments: React.FC = () => {
                         showBookmark={false}
                         showPricePerSqft={false}
                     />
-                </div>
 
-                {/* Right Column: Payment History & Info */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-                    {/* Monthly Incoming Payment Table */}
+                    {/* Verification Card (Contract Linkage) */}
                     <div style={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        backgroundColor: 'white',
+                        backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '20px',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                            <Shield size={18} color="#4f46e5" />
+                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>Contract Linkage</h3>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '13px', color: '#6b7280' }}>Status</span>
+                                {contractSnapshot.source === 'GENESIS' ? (
+                                    <span style={{ fontSize: '11px', backgroundColor: '#fffbeb', color: '#d97706', padding: '2px 8px', borderRadius: '99px', border: '1px solid #fcd34d' }}>GENESIS / MOCK</span>
+                                ) : (
+                                    <span style={{ fontSize: '11px', backgroundColor: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '999px', border: '1px solid #6ee7b7' }}>ANCHORED & VERIFIED</span>
+                                )}
+                            </div>
+
+                            <div style={{ height: '1px', backgroundColor: '#f3f4f6' }}></div>
+
+                            <div>
+                                <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Contract Hash</div>
+                                <code style={{ fontSize: '11px', color: '#374151', backgroundColor: '#f9fafb', padding: '4px', borderRadius: '4px', display: 'block' }}>
+                                    {contractSnapshot.contractHash.slice(0, 16)}...
+                                </code>
+                            </div>
+
+                            <div>
+                                <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Latest Ledger Root</div>
+                                {events.length > 0 ? (
+                                    <code style={{ fontSize: '11px', color: '#374151', backgroundColor: '#f9fafb', padding: '4px', borderRadius: '4px', display: 'block' }}>
+                                        {/* In real app, we'd store the latest root in state. For now just placeholder or recompute. 
+                                            Since we want to be fast, we can just say "Available" or fetch.
+                                            Let's just show "Syncing..." or similar if complex, but here we can't easily get it without async.
+                                        */}
+                                        (View in Merkle Record)
+                                    </code>
+                                ) : (
+                                    <span style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>No payments yet</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                    {/* Table */}
+                    <div style={{
+                        border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', backgroundColor: 'white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                             <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827' }}>Monthly Incoming Payment</h2>
+                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                                Next due: <span style={{ fontWeight: 600, color: '#111827' }}>{nextDueItem ? nextDueItem.date : 'All Paid'}</span>
+                            </div>
                         </div>
 
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                                 <thead>
                                     <tr style={{ borderBottom: '1px solid #e5e7eb', color: '#374151', textAlign: 'left' }}>
+                                        <th style={{ padding: '12px 8px', fontWeight: 500 }}>Due Date</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Principal</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Interest</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Received on</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Status</th>
-                                        <th style={{ padding: '12px 8px', fontWeight: 500, textAlign: 'right', position: 'relative' }}>
-                                            <div
-                                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', cursor: 'help', position: 'relative' }}
-                                                onMouseEnter={() => setShowTooltip(true)}
-                                                onMouseLeave={() => setShowTooltip(false)}
-                                            >
-                                                <span>Fee</span>
-                                                <Info size={14} color="#9ca3af" />
-
-                                                {showTooltip && (
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        top: '100%',
-                                                        right: '0',
-                                                        marginTop: '8px',
-                                                        backgroundColor: '#1f2937',
-                                                        color: 'white',
-                                                        padding: '6px 10px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '12px',
-                                                        whiteSpace: 'nowrap',
-                                                        zIndex: 20,
-                                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                                                    }}>
-                                                        0.5%/12 of UPB
-                                                        <div style={{
-                                                            position: 'absolute',
-                                                            bottom: '100%',
-                                                            right: '6px',
-                                                            borderWidth: '4px',
-                                                            borderStyle: 'solid',
-                                                            borderColor: 'transparent transparent #1f2937 transparent'
-                                                        }}></div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </th>
+                                        <th style={{ padding: '12px 8px', fontWeight: 500 }}>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {payments.map((p, i) => {
-                                        const total = p.principal + p.interest;
-                                        // Mock UPB decreasing by principal each month
-                                        const currentUPB = initialUPB - (p.principal * i);
-                                        const fee = calculateFee(currentUPB);
-
+                                    {itemsToShow.map((p, i) => {
                                         return (
                                             <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                                <td style={{ padding: '12px 8px', color: p.status === 'Delayed' ? '#ef4444' : '#111827' }}>${p.principal}</td>
-                                                <td style={{ padding: '12px 8px', color: p.status === 'Delayed' ? '#ef4444' : '#111827' }}>${p.interest}</td>
-                                                <td style={{ padding: '12px 8px', color: p.status === 'Delayed' ? '#ef4444' : '#111827', fontWeight: 500 }}>${total}</td>
-                                                <td style={{ padding: '12px 8px', color: '#4b5563' }}>{p.date}</td>
-                                                <td style={{ padding: '12px 8px', color: p.status === 'Delayed' ? '#ef4444' : '#111827' }}>{p.status}</td>
-                                                <td style={{ padding: '12px 8px', textAlign: 'right', color: '#6b7280', fontFamily: 'monospace' }}>
-                                                    {fee.toFixed(8)}
+                                                <td style={{ padding: '12px 8px', color: '#111827' }}>{p.date}</td>
+                                                <td style={{ padding: '12px 8px', color: '#111827' }}>${p.principal}</td>
+                                                <td style={{ padding: '12px 8px', color: '#111827' }}>${p.interest}</td>
+                                                <td style={{ padding: '12px 8px', fontWeight: 500, color: '#111827' }}>${p.total}</td>
+                                                <td style={{ padding: '12px 8px', color: '#6b7280' }}>{p.receivedOn}</td>
+                                                <td style={{ padding: '12px 8px' }}>
+                                                    {p.status === 'Paid' && (
+                                                        <span style={{
+                                                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                                            color: '#059669', fontWeight: 500, fontSize: '13px'
+                                                        }}>
+                                                            <CheckCircle size={14} /> Paid
+                                                        </span>
+                                                    )}
+                                                    {p.isOverdue && p.status !== 'Paid' && (
+                                                        <span style={{
+                                                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                                            color: '#dc2626', fontWeight: 500, fontSize: '13px'
+                                                        }}>
+                                                            Overdue
+                                                        </span>
+                                                    )}
+                                                    {!p.isOverdue && p.status !== 'Paid' && (
+                                                        <span style={{ color: '#9ca3af' }}>Unpaid</span>
+                                                    )}
+                                                </td>
+                                                <td style={{ padding: '12px 8px' }}>
+                                                    {p.status !== 'Paid' && (
+                                                        <button
+                                                            onClick={() => handleOpenPayModal(p.total, p.date)}
+                                                            style={{
+                                                                backgroundColor: '#000', color: 'white', border: 'none',
+                                                                borderRadius: '6px', padding: '6px 12px', fontSize: '12px',
+                                                                fontWeight: 600, cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            Pay Now
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -146,23 +266,17 @@ const Payments: React.FC = () => {
                             </table>
                         </div>
 
-                        {/* Blockchain Hash */}
+                        {/* Hash Link */}
                         <div
                             onClick={() => navigate('/merkle-record')}
                             style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '16px', cursor: 'pointer' }}
                             title="View Merkle Record Details"
                         >
-                            <span style={{ fontSize: '14px', color: '#374151' }}>Hash</span>
+                            <span style={{ fontSize: '14px', color: '#374151' }}>Verify Ledger</span>
                             <div style={{
-                                width: '24px',
-                                height: '24px',
-                                backgroundColor: '#111827',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
+                                width: '24px', height: '24px', backgroundColor: '#111827', borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}>
-                                {/* Simple spinner/hash icon mock */}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -171,45 +285,6 @@ const Payments: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Bank Account Information */}
-                    <div style={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        backgroundColor: 'white'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827' }}>Bank Account Information</h2>
-                            <button style={{
-                                background: 'none',
-                                border: 'none',
-                                padding: '8px',
-                                cursor: 'pointer',
-                                color: '#9ca3af',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Pencil size={18} />
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '16px', fontSize: '14px' }}>
-                            <div style={{ color: '#6b7280' }}>Account holder name</div>
-                            <div style={{ color: '#111827', fontWeight: 500 }}>Mark J.</div>
-
-                            <div style={{ color: '#6b7280' }}>Bank name</div>
-                            <div style={{ color: '#111827', fontWeight: 500 }}>Bank of America</div>
-
-                            <div style={{ color: '#6b7280' }}>Account number</div>
-                            <div style={{ color: '#111827', fontWeight: 500 }}>1234567890</div>
-
-                            <div style={{ color: '#6b7280' }}>Routing number</div>
-                            <div style={{ color: '#111827', fontWeight: 500 }}>021000021</div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -217,3 +292,4 @@ const Payments: React.FC = () => {
 };
 
 export default Payments;
+
