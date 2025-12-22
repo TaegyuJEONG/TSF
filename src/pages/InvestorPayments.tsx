@@ -3,11 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import MarketplaceCard from '../components/dashboard/MarketplaceCard';
 import listing1Image from '../assets/listing_1.jpg';
 import { Shield, CheckCircle } from 'lucide-react';
+import PaymentProcessModal from '../components/payments/PaymentProcessModal';
 import { getPaymentEvents, getContractSnapshot } from '../services/paymentService';
 import type { PaymentEvent } from '../types/payment';
 
-const Payments: React.FC = () => {
+const InvestorPayments: React.FC = () => {
     const navigate = useNavigate();
+
+    // Modal State
+    const [isPayModalOpen, setPayModalOpen] = useState(false);
+    const [selectedOverdueItem, setSelectedOverdueItem] = useState<{ amount: number, date: string } | null>(null);
 
     // Data State
     const [events, setEvents] = useState<PaymentEvent[]>([]);
@@ -18,6 +23,18 @@ const Payments: React.FC = () => {
         setEvents(getPaymentEvents());
         setContractSnapshot(getContractSnapshot());
     }, []);
+
+    const handlePaymentSuccess = (newEvent: PaymentEvent) => {
+        setEvents(prev => [...prev, newEvent]); // Optimistic update, or reload
+        // In reality, service handles persistence, so we just reload from service or append
+        setEvents(getPaymentEvents());
+        setPayModalOpen(false);
+    };
+
+    const handleOpenPayModal = (amount: number, date: string) => {
+        setSelectedOverdueItem({ amount, date });
+        setPayModalOpen(true);
+    };
 
     // --- Mock Data Construction based on stored events ---
     // We combine "Official History" (from events) with "Projected Schedule" (mock)
@@ -94,6 +111,17 @@ const Payments: React.FC = () => {
 
     return (
         <div className="container" style={{ padding: '32px 0' }}>
+
+            {/* Payment Modal */}
+            {selectedOverdueItem && (
+                <PaymentProcessModal
+                    isOpen={isPayModalOpen}
+                    onClose={() => setPayModalOpen(false)}
+                    dueAmount={selectedOverdueItem.amount}
+                    dueDate={selectedOverdueItem.date}
+                    onPaymentSuccess={handlePaymentSuccess}
+                />
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '32px' }}>
 
@@ -184,6 +212,7 @@ const Payments: React.FC = () => {
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Received on</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Status</th>
+                                        <th style={{ padding: '12px 8px', fontWeight: 500 }}>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -214,6 +243,20 @@ const Payments: React.FC = () => {
                                                     )}
                                                     {!p.isOverdue && p.status !== 'Paid' && (
                                                         <span style={{ color: '#9ca3af' }}>Unpaid</span>
+                                                    )}
+                                                </td>
+                                                <td style={{ padding: '12px 8px' }}>
+                                                    {p.status !== 'Paid' && (
+                                                        <button
+                                                            onClick={() => handleOpenPayModal(p.total, p.date)}
+                                                            style={{
+                                                                backgroundColor: '#000', color: 'white', border: 'none',
+                                                                borderRadius: '6px', padding: '6px 12px', fontSize: '12px',
+                                                                fontWeight: 600, cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            Pay Now
+                                                        </button>
                                                     )}
                                                 </td>
                                             </tr>
@@ -248,5 +291,4 @@ const Payments: React.FC = () => {
     );
 };
 
-export default Payments;
-
+export default InvestorPayments;

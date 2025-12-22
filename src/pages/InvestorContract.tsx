@@ -5,9 +5,9 @@ import heroImage from '../assets/listing_1.jpg';
 import ContractInputForm, { type ContractData } from '../components/contract/ContractInputForm';
 import ContractDocumentList from '../components/contract/ContractDocumentList';
 
-const Contract: React.FC = () => {
+const InvestorContract: React.FC = () => {
     // Persistence Key
-    const STORAGE_KEY = 'tsf_contract_page_state_v1';
+    const STORAGE_KEY = 'tsf_investor_contract_page_state_v1';
 
     // Lazy Initializers
     const loadState = () => {
@@ -103,7 +103,6 @@ const Contract: React.FC = () => {
     const riskCategory = getRiskCategory();
 
     const handleGenerate = () => {
-        setCompletionData(null); // Clear previous completion data if regenerating
         setStep('preview');
     };
 
@@ -250,4 +249,4 @@ const Contract: React.FC = () => {
     );
 };
 
-export default Contract;
+export default InvestorContract;

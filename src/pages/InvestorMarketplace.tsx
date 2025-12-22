@@ -16,7 +16,8 @@ const InvestorMarketplace: React.FC = () => {
             yield: 15.8,
             ltv: 44,
             available: 107000000, // using 107m representation
-            progress: 80,
+            progress: 0,
+            daysLeft: 30,
             image: heroImage,
             tier: 'Tier A',
         },
@@ -28,6 +29,7 @@ const InvestorMarketplace: React.FC = () => {
             ltv: 44,
             available: 107000000,
             progress: 10,
+            daysLeft: 17,
             image: image2,
             tier: 'Tier B',
         },
@@ -40,6 +42,7 @@ const InvestorMarketplace: React.FC = () => {
             available: 107000000,
             progress: 100,
             isInvested: true,
+            daysLeft: 5,
             image: image3,
             tier: 'Tier C',
         },
@@ -122,7 +125,7 @@ const InvestorMarketplace: React.FC = () => {
                                         fontSize: '13px', fontWeight: 700, color: '#dc2626',
                                         backgroundColor: '#fee2e2', padding: '4px 8px', borderRadius: '4px'
                                     }}>
-                                        D-17
+                                        D-{listing.daysLeft}
                                     </span>
                                 </div>
 

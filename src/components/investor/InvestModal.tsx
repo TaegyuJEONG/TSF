@@ -151,7 +151,7 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose }) => {
                             <div>
                                 <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>Make Investment</h2>
                                 <div style={{ fontSize: '14px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    Time Left: <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>17 Days</span>
+                                    Time Left: <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>30 Days</span>
                                 </div>
                             </div>
                         </div>
@@ -164,11 +164,11 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose }) => {
                             </div>
                             <div>
                                 <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Invested</div>
-                                <div style={{ fontSize: '14px', fontWeight: 700 }}>{formatCurrency(364000)} (80%)</div>
+                                <div style={{ fontSize: '14px', fontWeight: 700 }}>{formatCurrency(0)} (0%)</div>
                             </div>
                             <div>
                                 <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Available</div>
-                                <div style={{ fontSize: '14px', fontWeight: 700, color: '#166534' }}>{formatCurrency(91000)}</div>
+                                <div style={{ fontSize: '14px', fontWeight: 700, color: '#166534' }}>{formatCurrency(455000)}</div>
                             </div>
                         </div>
 

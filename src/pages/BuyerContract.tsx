@@ -5,9 +5,9 @@ import heroImage from '../assets/listing_1.jpg';
 import ContractInputForm, { type ContractData } from '../components/contract/ContractInputForm';
 import ContractDocumentList from '../components/contract/ContractDocumentList';
 
-const Contract: React.FC = () => {
-    // Persistence Key
-    const STORAGE_KEY = 'tsf_contract_page_state_v1';
+const BuyerContract: React.FC = () => {
+    // Unique Persistence Key for Buyer
+    const STORAGE_KEY = 'tsf_buyer_contract_page_state_v1';
 
     // Lazy Initializers
     const loadState = () => {
@@ -67,7 +67,6 @@ const Contract: React.FC = () => {
     const downPaymentNum = parseFloat(contractData.downPaymentPercent) || 0;
     const rateNum = parseFloat(contractData.interestRate) || 0;
 
-    // Amortization/Term (Basis for Monthly Payment & Repayment)
     const termVal = parseInt(contractData.term) || 30;
     const isMonths = contractData.termUnit === 'months';
     const totalMonths = isMonths ? termVal : termVal * 12;
@@ -75,7 +74,6 @@ const Contract: React.FC = () => {
     const downPaymentAmount = priceNum * (downPaymentNum / 100);
     const loanAmount = priceNum - downPaymentAmount;
 
-    // Monthly Payment Calculation
     const monthlyRate = rateNum / 100 / 12;
 
     let monthlyPayment = 0;
@@ -83,17 +81,13 @@ const Contract: React.FC = () => {
         if (rateNum === 0) {
             monthlyPayment = loanAmount / totalMonths;
         } else {
-            // Formula: M = P [ i(1 + i)^n ] / [ (1 + i)^n – 1 ]
             monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
         }
     }
 
-    // Total Repayment Calculation
     const totalRepayment = monthlyPayment * totalMonths;
+    const contractFee = loanAmount * 0.01;
 
-    const contractFee = loanAmount * 0.01; // 1% of Note Principal (Loan Amount)
-
-    // Risk Categorization
     const getRiskCategory = () => {
         if (!contractData.downPaymentPercent || !contractData.price) return null;
         if (downPaymentNum >= 30) return 'Tier A';
@@ -103,7 +97,6 @@ const Contract: React.FC = () => {
     const riskCategory = getRiskCategory();
 
     const handleGenerate = () => {
-        setCompletionData(null); // Clear previous completion data if regenerating
         setStep('preview');
     };
 
@@ -113,7 +106,6 @@ const Contract: React.FC = () => {
     };
 
     const handleNewContract = () => {
-        // Reset for new contract
         const initialData: ContractData = {
             buyer: null,
             price: '475,000',
@@ -138,7 +130,6 @@ const Contract: React.FC = () => {
         setCompletionData(null);
         setShowForm(true);
 
-        // Explicitly clear/overwrite storage right away to avoid race conditions
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             step: 'input',
             showForm: true,
@@ -195,7 +186,7 @@ const Contract: React.FC = () => {
                             border: (showForm && !isCompleted) ? '1px solid #e5e7eb' : 'none'
                         }}
                     >
-                        {isCompleted ? "New Contract" : "Build Contract"}
+                        {isCompleted ? "New Contract" : "Review Contract"}
                     </Button>
                 </div>
 
@@ -235,19 +226,8 @@ const Contract: React.FC = () => {
                     </div>
                 )}
             </div>
-            {/* Yellow decoration circle */}
-            <div style={{
-                position: 'fixed',
-                bottom: '80px',
-                right: '80px',
-                width: '120px',
-                height: '120px',
-                backgroundColor: '#fbbf24',
-                borderRadius: '50%',
-                zIndex: -1
-            }}></div>
         </div>
     );
 };
 
-export default Contract;
+export default BuyerContract;

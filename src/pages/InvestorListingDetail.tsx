@@ -38,9 +38,9 @@ const InvestorListingDetail: React.FC = () => {
     const listing = {
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
         price: 455000,
-        investedAmount: 364000,
-        investedPercent: 80,
-        timeLeft: '17 days left',
+        investedAmount: 0,
+        investedPercent: 0,
+        timeLeft: '30 days left',
         monthlyPayment: 6000,
         remainingTerm: 107,
         maturityDate: 'Jan 1, 2035',
