@@ -24,6 +24,19 @@ const InvestorPayments: React.FC = () => {
         setContractSnapshot(getContractSnapshot());
     }, []);
 
+    // --- Investment State for "Your Share" ---
+    const NOTE_SIZE = 455000;
+    const [mySharePct, setMySharePct] = useState(0);
+
+    useEffect(() => {
+        const storedInvestments = localStorage.getItem('investor_investments');
+        if (storedInvestments) {
+            const investments = JSON.parse(storedInvestments);
+            const total = investments.reduce((sum: number, item: any) => sum + item.amount, 0);
+            setMySharePct(total / NOTE_SIZE);
+        }
+    }, []);
+
     const handlePaymentSuccess = (newEvent: PaymentEvent) => {
         setEvents(prev => [...prev, newEvent]); // Optimistic update, or reload
         // In reality, service handles persistence, so we just reload from service or append
@@ -32,8 +45,8 @@ const InvestorPayments: React.FC = () => {
     };
 
     const handleOpenPayModal = (amount: number, date: string) => {
-        setSelectedOverdueItem({ amount, date });
-        setPayModalOpen(true);
+        // setSelectedOverdueItem({ amount, date }); // Button removed
+        // setPayModalOpen(true);
     };
 
     // --- Mock Data Construction based on stored events ---
@@ -93,7 +106,7 @@ const InvestorPayments: React.FC = () => {
     // Marketplace Card Data
     const listingData = {
         image: listing1Image,
-        price: 450000,
+        price: 455000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
         sqft: 1982,
         specs: { dp: 45000, term: 30, interest: 6, beds: 3, baths: 2 },
@@ -210,6 +223,7 @@ const InvestorPayments: React.FC = () => {
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Principal</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Interest</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total</th>
+                                        <th style={{ padding: '12px 8px', fontWeight: 600, color: '#111827' }}>Your Share</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Received on</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Status</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Action</th>
@@ -223,6 +237,9 @@ const InvestorPayments: React.FC = () => {
                                                 <td style={{ padding: '12px 8px', color: '#111827' }}>${p.principal}</td>
                                                 <td style={{ padding: '12px 8px', color: '#111827' }}>${p.interest}</td>
                                                 <td style={{ padding: '12px 8px', fontWeight: 500, color: '#111827' }}>${p.total}</td>
+                                                <td style={{ padding: '12px 8px', fontWeight: 600, color: '#166534' }}>
+                                                    ${(p.total * mySharePct).toFixed(2)}
+                                                </td>
                                                 <td style={{ padding: '12px 8px', color: '#6b7280' }}>{p.receivedOn}</td>
                                                 <td style={{ padding: '12px 8px' }}>
                                                     {p.status === 'Paid' && (
@@ -247,16 +264,7 @@ const InvestorPayments: React.FC = () => {
                                                 </td>
                                                 <td style={{ padding: '12px 8px' }}>
                                                     {p.status !== 'Paid' && (
-                                                        <button
-                                                            onClick={() => handleOpenPayModal(p.total, p.date)}
-                                                            style={{
-                                                                backgroundColor: '#000', color: 'white', border: 'none',
-                                                                borderRadius: '6px', padding: '6px 12px', fontSize: '12px',
-                                                                fontWeight: 600, cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            Pay Now
-                                                        </button>
+                                                        <span style={{ fontSize: '13px', color: '#6b7280' }}>-</span>
                                                     )}
                                                 </td>
                                             </tr>

@@ -31,15 +31,10 @@ const InvestorListingDetail: React.FC = () => {
     const navigate = useNavigate();
     // const { id } = useParams(); // In a real app, fetch data based on ID
 
-    const [isInvestModalOpen, setIsInvestModalOpen] = React.useState(false);
-    const [isMerkleModalOpen, setIsMerkleModalOpen] = React.useState(false);
-
-    // Mock Data
-    const listing = {
-        address: '5931 Abernathy Dr, Los Angeles, CA 90045',
+    // Fixed Listing Data
+    const listingBase = {
         price: 455000,
-        investedAmount: 0,
-        investedPercent: 0,
+        address: '5931 Abernathy Dr, Los Angeles, CA 90045',
         timeLeft: '30 days left',
         monthlyPayment: 6000,
         remainingTerm: 107,
@@ -58,10 +53,44 @@ const InvestorListingDetail: React.FC = () => {
         dtiRisk: 'Moderate risk'
     };
 
+    const [isInvestModalOpen, setIsInvestModalOpen] = React.useState(false);
+    const [isMerkleModalOpen, setIsMerkleModalOpen] = React.useState(false);
+
+    // State for dynamic investment data
+    const [investedAmount, setInvestedAmount] = React.useState(0);
+
+    // Load initial state from localStorage
+    React.useEffect(() => {
+        const storedInvestments = localStorage.getItem('investor_investments');
+        if (storedInvestments) {
+            const investments = JSON.parse(storedInvestments);
+            const total = investments.reduce((sum: number, item: any) => sum + item.amount, 0);
+            setInvestedAmount(total);
+        }
+    }, []);
+
+    const investedPercent = Math.min(100, Math.round((investedAmount / listingBase.price) * 100));
+
+    const handleInvest = (amount: number) => {
+        setInvestedAmount(prev => prev + amount);
+    };
+
+    // Combine for render
+    const listing = {
+        ...listingBase,
+        investedAmount,
+        investedPercent
+    };
+
+
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#fff', paddingBottom: '80px', fontFamily: 'Inter, sans-serif' }}>
 
-            <InvestModal isOpen={isInvestModalOpen} onClose={() => setIsInvestModalOpen(false)} />
+            <InvestModal
+                isOpen={isInvestModalOpen}
+                onClose={() => setIsInvestModalOpen(false)}
+                onInvest={handleInvest}
+            />
             <MerkleRecordModal isOpen={isMerkleModalOpen} onClose={() => setIsMerkleModalOpen(false)} />
 
             {/* Header */}

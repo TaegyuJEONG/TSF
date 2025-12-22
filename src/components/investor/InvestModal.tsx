@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { useWallet } from '../../hooks/useWallet';
 
 interface InvestModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onInvest: (amount: number) => void;
 }
 
 // Helper for currency formatting
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 
-const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose }) => {
+const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) => {
+    const { address } = useWallet();
     const [step, setStep] = useState<1 | 2>(1);
     const [agreed, setAgreed] = useState(false);
     const [expandedDoc, setExpandedDoc] = useState<string | null>('Tokenized Note (Investment Certificate)');
@@ -56,7 +59,21 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose }) => {
     };
 
     const handlePay = () => {
-        // Mock payment
+        // Mock payment & Persistence
+        const newInvestment = {
+            walletAddress: address || '0xWalletNotConnected',
+            amount: investmentAmount,
+            share: share,
+            timestamp: new Date().toISOString()
+        };
+
+        // Save to localStorage
+        const storedInvestments = localStorage.getItem('investor_investments');
+        const investments = storedInvestments ? JSON.parse(storedInvestments) : [];
+        investments.push(newInvestment);
+        localStorage.setItem('investor_investments', JSON.stringify(investments));
+
+        onInvest(investmentAmount);
         onClose();
         alert(`Investment of ${formatCurrency(investmentAmount)} confirmed!`);
         // Reset state
