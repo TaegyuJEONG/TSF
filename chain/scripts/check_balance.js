@@ -1,27 +1,25 @@
-const { ethers } = require("hardhat");
+
+const hre = require("hardhat");
 
 async function main() {
-    const tokenAddress = process.env.DEMOUSD_ADDRESS || "0x2f514963a095533590E1FB98eedC637D3947d219"; // Default to the one from logs if env missing
+    const listingAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    const demoUSDAddress = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
-    if (!tokenAddress) throw new Error("Missing Token Address");
+    console.log(`Checking Balance of Listing at ${listingAddress}...`);
 
-    const demo = await ethers.getContractAt("DemoUSD", tokenAddress);
+    // Minimal ERC20 ABI
+    const abi = ["function balanceOf(address owner) view returns (uint256)"];
+    const demoUSD = await hre.ethers.getContractAt(abi, demoUSDAddress);
 
-    const recipients = [
-        { name: "SPV", address: "0x7757e94e0830c6b4373b72f4450ff19ccc6a92ea" },
-        { name: "Investor1", address: "0xd1033d95fa1e3d1a38d0a770fb3f5192fb0983c8" },
-        { name: "Investor2", address: "0x834e87f5c0e21df98870d4bba5bd0f04be2d5a71" },
-    ];
-
-    console.log(`Checking balances for DemoUSD at ${tokenAddress}...`);
-
-    for (const r of recipients) {
-        const balance = await demo.balanceOf(r.address);
-        console.log(`${r.name} (${r.address}): ${ethers.formatUnits(balance, 6)} dUSD`);
+    try {
+        const balance = await demoUSD.balanceOf(listingAddress);
+        console.log(`DEMO USD BALANCE: ${balance.toString()}`);
+    } catch (e) {
+        console.error("Error fetching data:", e.message);
     }
 }
 
-main().catch((e) => {
-    console.error(e);
+main().catch((error) => {
+    console.error(error);
     process.exitCode = 1;
 });

@@ -45,6 +45,12 @@ export const getPaymentEvents = (): PaymentEvent[] => {
     return [];
 };
 
+export const savePaymentEvent = (event: PaymentEvent): void => {
+    const events = getPaymentEvents();
+    events.push(event);
+    localStorage.setItem(DB_KEY_PAYMENTS, JSON.stringify(events));
+};
+
 export const clearPaymentEvents = (): void => {
     localStorage.removeItem(DB_KEY_PAYMENTS);
 };

@@ -5,6 +5,8 @@ import Button from '../components/ui/Button';
 import heroImage from '../assets/listing_1.jpg';
 import InvestModal from '../components/investor/InvestModal';
 import MerkleRecordModal from '../components/dashboard/MerkleRecordModal';
+import { ethers } from 'ethers';
+import ListingABI from '../abis/Listing.json';
 
 // Helper for currency formatting
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
@@ -56,23 +58,101 @@ const InvestorListingDetail: React.FC = () => {
     const [isInvestModalOpen, setIsInvestModalOpen] = React.useState(false);
     const [isMerkleModalOpen, setIsMerkleModalOpen] = React.useState(false);
 
+    // State for Note Metadata from blockchain
+    const [noteMetadata, setNoteMetadata] = React.useState<{
+        contractHash: string;
+        creditHash: string;
+        anchorHash: string;
+        paymentLedgerRoot: string;
+        listingPrice: number;
+        listedAt: number;
+        listingTxHash: string;
+    } | null>(null);
+
     // State for dynamic investment data
     const [investedAmount, setInvestedAmount] = React.useState(0);
+    const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
-    // Load initial state from localStorage
+    // Load initial state mainly from Chain, fallback to local if needed or just chain
+    // Data: Fetch 'raised' from contract
+    // Load initial state mainly from Chain, fallback to local if needed or just chain
+    // Data: Fetch 'raised' from contract
     React.useEffect(() => {
-        const storedInvestments = localStorage.getItem('investor_investments');
-        if (storedInvestments) {
-            const investments = JSON.parse(storedInvestments);
-            const total = investments.reduce((sum: number, item: any) => sum + item.amount, 0);
-            setInvestedAmount(total);
-        }
+        const fetchRaised = async () => {
+            try {
+                // Priority 1: Use Localhost RPC directly (Robust for Demo)
+                let provider;
+                try {
+                    // Changing to Mantle Sepolia RPC as per user's screenshot context
+                    provider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
+                    await provider.getNetwork();
+                } catch (e) {
+                    if (window.ethereum) {
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                    }
+                }
+
+                if (!provider) return;
+
+                // Mantle Sepolia Contract Addresses
+                const listingAddress = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+                const demoUSDAddress = "0x2f514963a095533590E1FB98eedC637D3947d219";
+
+                // Fetch Balance of DemoUSD held by Listing Contract
+                // This represents the actual "money in the bank"
+                const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
+                const demoUSD = new ethers.Contract(demoUSDAddress, erc20Abi, provider);
+
+                const balanceWei = await demoUSD.balanceOf(listingAddress);
+                console.log("Listing Internal 'raised': (Skipped)");
+                console.log("Listing Actual DemoUSD Balance:", balanceWei.toString());
+
+                setInvestedAmount(Number(balanceWei) / 1_000_000); // 6 decimals
+            } catch (err) {
+                console.error("Error fetching raised amount:", err);
+            }
+        };
+
+        fetchRaised();
+        const interval = setInterval(fetchRaised, 3000);
+        return () => clearInterval(interval);
+    }, [refreshTrigger]);
+
+    // Fetch Note Metadata from blockchain
+    React.useEffect(() => {
+        const fetchNoteMetadata = async () => {
+            try {
+                const provider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
+                const listingAddress = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+                const listing = new ethers.Contract(listingAddress, ListingABI, provider);
+
+                // Call getNoteMetadata()
+                const metadata = await listing.getNoteMetadata();
+
+                // Convert bytes32 to hex string
+                setNoteMetadata({
+                    contractHash: metadata[0],
+                    creditHash: metadata[1],
+                    anchorHash: metadata[2],
+                    paymentLedgerRoot: metadata[3],
+                    listingPrice: Number(metadata[4]),
+                    listedAt: Number(metadata[5]),
+                    listingTxHash: '' // We don't have this from the contract, would need to fetch from events
+                });
+            } catch (err) {
+                console.error("Error fetching note metadata:", err);
+            }
+        };
+
+        fetchNoteMetadata();
     }, []);
 
     const investedPercent = Math.min(100, Math.round((investedAmount / listingBase.price) * 100));
 
     const handleInvest = (amount: number) => {
+        // optimistically update or just trigger refresh
         setInvestedAmount(prev => prev + amount);
+        setTimeout(() => setRefreshTrigger(t => t + 1), 2000); // Trigger re-fetch
     };
 
     // Combine for render
@@ -91,7 +171,17 @@ const InvestorListingDetail: React.FC = () => {
                 onClose={() => setIsInvestModalOpen(false)}
                 onInvest={handleInvest}
             />
-            <MerkleRecordModal isOpen={isMerkleModalOpen} onClose={() => setIsMerkleModalOpen(false)} />
+            <MerkleRecordModal
+                isOpen={isMerkleModalOpen}
+                onClose={() => setIsMerkleModalOpen(false)}
+                contractHash={noteMetadata?.contractHash}
+                creditHash={noteMetadata?.creditHash}
+                anchorHash={noteMetadata?.anchorHash}
+                paymentLedgerRoot={noteMetadata?.paymentLedgerRoot}
+                listingPrice={noteMetadata?.listingPrice}
+                listedAt={noteMetadata?.listedAt}
+                listingTxHash={noteMetadata?.listingTxHash}
+            />
 
             {/* Header */}
             <div style={{ padding: '16px 40px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 50 }}>
@@ -217,7 +307,7 @@ const InvestorListingDetail: React.FC = () => {
                         cursor: 'pointer', transition: 'all 0.2s',
                         color: '#374151', fontSize: '13px', fontWeight: 500
                     }}
-                        onClick={() => setIsMerkleModalOpen(true)}
+                        onClick={() => navigate('/merkle-record')}
                         title="View Verified Merkle Record"
                     >
                         <span>Verified on Blockchain</span>

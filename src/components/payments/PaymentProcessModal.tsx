@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import Button from '../ui/Button';
-import { getContractSnapshot, processPayment } from '../../services/paymentService';
+import { savePaymentEvent } from '../../services/paymentService';
 import type { PaymentEvent } from '../../types/payment';
 import { Shield, CheckCircle } from 'lucide-react';
+import { ethers } from 'ethers';
+import { callContractAsSPV } from '../../utils/blockchain';
+import ListingABI from '../../abis/Listing.json';
+import DemoUSD_ABI from '../../abis/DemoUSD.json';
 
 interface PaymentProcessModalProps {
     isOpen: boolean;
@@ -11,6 +15,9 @@ interface PaymentProcessModalProps {
     dueDate: string;
     onPaymentSuccess: (event: PaymentEvent) => void;
 }
+
+const LISTING_ADDRESS = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
 const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
     isOpen,
@@ -25,34 +32,109 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
 
     if (!isOpen) return null;
 
-    const contractSnapshot = getContractSnapshot();
-    const isGenesis = contractSnapshot.source === 'GENESIS';
-
     const handleConfirm = async () => {
         setStep('processing');
         setErrorMsg('');
         try {
-            // Mock principal/interest split for this demo
-            const principal = dueAmount * 0.6;
-            const interest = dueAmount * 0.4;
+            // Check if funding is complete (100%)
+            const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
+            const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
 
-            const result = await processPayment(
-                { principal, interest, total: dueAmount, currency: 'USD' },
-                dueDate
-            );
+            const raised = await listing.raised();
+            const goal = await listing.goal();
+            const isFundingComplete = Number(raised) >= Number(goal);
 
-            setTxHash(result.tx.hash);
-            setStep('success');
+            console.log(`Funding status: ${Number(raised)}/${Number(goal)} = ${isFundingComplete ? 'COMPLETE' : 'INCOMPLETE'}`);
 
-            // Wait a moment before closing/callback to show success state
-            setTimeout(() => {
-                onPaymentSuccess(result.event);
-            }, 3000);
+            if (!isFundingComplete) {
+                // BEFORE 100%: TSF → TSF anchoring only (데이터만 기록)
+                console.log("Funding incomplete. Anchoring payment data only (TSF→TSF)...");
+
+                const principal = dueAmount * 0.6;
+                const interest = dueAmount * 0.4;
+
+                const paymentData = {
+                    type: 'PAYMENT_RECORD',
+                    scheduledDueDate: dueDate,
+                    receivedAt: new Date().toISOString(),
+                    amount: { principal, interest, total: dueAmount, currency: 'USD' },
+                    status: 'ANCHORED_PRE_FUNDING'
+                };
+
+                const anchorResult = await submitCustodialTransaction(JSON.stringify(paymentData));
+                console.log("Payment data anchored:", anchorResult.hash);
+                setTxHash(anchorResult.hash);
+
+                // Save event locally
+                const paymentEvent: any = {
+                    eventId: `payment_${Date.now()}`,
+                    scheduledDueDate: dueDate,
+                    receivedAt: new Date().toISOString(),
+                    amount: { principal, interest, total: dueAmount, currency: 'USD' },
+                    statusAfter: 'ANCHORED',
+                    anchoredTxHash: anchorResult.hash
+                };
+
+                savePaymentEvent(paymentEvent);
+                setStep('success');
+
+                setTimeout(() => {
+                    onPaymentSuccess(paymentEvent);
+                }, 3000);
+
+            } else {
+                // AFTER 100%: SPV → Contract (실제 DemoUSD 전송)
+                console.log("Funding complete. Transferring DemoUSD (SPV→Contract)...");
+
+                const amountWei = ethers.parseUnits(dueAmount.toString(), 6);
+
+                // 1. Approve DemoUSD spending
+                console.log("Approving DemoUSD spending...");
+                const approveTxResult = await callContractAsSPV(
+                    DEMOUSD_ADDRESS,
+                    DemoUSD_ABI,
+                    'approve',
+                    [LISTING_ADDRESS, amountWei]
+                );
+                console.log("DemoUSD approved:", approveTxResult.hash);
+
+                // 2. Make payment to contract
+                console.log("Making payment to Listing contract...");
+                const paymentTxResult = await callContractAsSPV(
+                    LISTING_ADDRESS,
+                    ListingABI,
+                    'makePayment',
+                    [amountWei]
+                );
+
+                console.log("Payment successful! TX:", paymentTxResult.hash);
+                setTxHash(paymentTxResult.hash);
+
+                // 3. Save event locally
+                const principal = dueAmount * 0.6;
+                const interest = dueAmount * 0.4;
+
+                const paymentEvent: any = {
+                    eventId: `payment_${Date.now()}`,
+                    scheduledDueDate: dueDate,
+                    receivedAt: new Date().toISOString(),
+                    amount: { principal, interest, total: dueAmount, currency: 'USD' },
+                    statusAfter: 'PAID',
+                    anchoredTxHash: paymentTxResult.hash
+                };
+
+                savePaymentEvent(paymentEvent);
+                setStep('success');
+
+                setTimeout(() => {
+                    onPaymentSuccess(paymentEvent);
+                }, 3000);
+            }
 
         } catch (error: any) {
             console.error("Payment failed", error);
             setErrorMsg(error.message || "Payment processing failed");
-            setStep('review'); // Go back to allow retry
+            setStep('review');
         }
     };
 
@@ -85,33 +167,24 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Shield size={16} color="#4f46e5" />
-                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>Contract Linkage</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>Blockchain Payment</span>
                                 </div>
-                                {isGenesis ? (
-                                    <span style={{
-                                        backgroundColor: '#fffbeb', color: '#d97706', fontSize: '11px',
-                                        padding: '2px 8px', borderRadius: '999px', fontWeight: 600, border: '1px solid #fcd34d'
-                                    }}>
-                                        GENESIS / MOCK
-                                    </span>
-                                ) : (
-                                    <span style={{
-                                        backgroundColor: '#ecfdf5', color: '#059669', fontSize: '11px',
-                                        padding: '2px 8px', borderRadius: '999px', fontWeight: 600, border: '1px solid #6ee7b7'
-                                    }}>
-                                        VERIFIED
-                                    </span>
-                                )}
+                                <span style={{
+                                    backgroundColor: '#dbeafe', color: '#1e40af', fontSize: '11px',
+                                    padding: '2px 8px', borderRadius: '999px', fontWeight: 600, border: '1px solid #93c5fd'
+                                }}>
+                                    ON-CHAIN
+                                </span>
                             </div>
 
                             <div style={{ fontSize: '13px', color: '#6b7280', display: 'grid', gap: '8px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Contract Hash:</span>
-                                    <span style={{ fontFamily: 'monospace' }}>{contractSnapshot.contractHash.slice(0, 8)}...</span>
+                                <div style={{ marginBottom: '8px' }}>
+                                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Payment will be sent to:</div>
+                                    <div style={{ fontWeight: 600, color: '#374151' }}>Listing Contract: {LISTING_ADDRESS.slice(0, 20)}...</div>
+                                    <div style={{ fontWeight: 600, color: '#374151', marginTop: '4px' }}>Network: Mantle Sepolia</div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Credit Hash:</span>
-                                    <span style={{ fontFamily: 'monospace' }}>{contractSnapshot.creditHash.slice(0, 8)}...</span>
+                                <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic' }}>
+                                    💡 Payment will be automatically distributed pro-rata to all investors
                                 </div>
                             </div>
                         </div>

@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
-import { ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
+import { BrowserProvider, Contract, ethers } from 'ethers';
+import ListingABI from '../../abis/Listing.json';
+
+// ERC20 Minimal ABI for Approve
+const ERC20ABI = [
+    "function approve(address spender, uint256 amount) public returns (bool)",
+    "function allowance(address owner, address spender) public view returns (uint256)"
+];
 
 interface InvestModalProps {
     isOpen: boolean;
@@ -10,7 +18,10 @@ interface InvestModalProps {
     onInvest: (amount: number) => void;
 }
 
-// Helper for currency formatting
+// Mantle Sepolia Contract Addresses
+const LISTING_ADDRESS = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
+
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 
 const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) => {
@@ -20,14 +31,60 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) 
     const [expandedDoc, setExpandedDoc] = useState<string | null>('Tokenized Note (Investment Certificate)');
     const [investmentAmount, setInvestmentAmount] = useState<number>(10000); // Default $10k
 
+    // Transaction State
+    const [isApproving, setIsApproving] = useState(false);
+    const [isInvesting, setIsInvesting] = useState(false);
+    const [txHash, setTxHash] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    // State for Dynamic Data
+    const [myInvestment, setMyInvestment] = useState<number>(0);
+    const [totalRaised, setTotalRaised] = useState<number>(0);
+
+    // Fetch Contract Data
+    // Fetch Contract Data
+    React.useEffect(() => {
+        if (!isOpen) return;
+
+        const fetchData = async () => {
+            try {
+                // 1. Total Raised (Public - Try RPC first)
+                try {
+                    const rpcProvider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+                    const listingPublic = new Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
+                    const raisedWei = await listingPublic.raised();
+                    setTotalRaised(Number(raisedWei) / 1_000_000);
+                } catch (e) {
+                    // Fallback to browser provider if RPC fails
+                    if (window.ethereum) {
+                        const browserProvider = new BrowserProvider(window.ethereum);
+                        const listing = new Contract(LISTING_ADDRESS, ListingABI, browserProvider);
+                        const raisedWei = await listing.raised();
+                        setTotalRaised(Number(raisedWei) / 1_000_000);
+                    }
+                }
+
+                // 2. My Investment (Private - Needs Wallet)
+                if (window.ethereum && address) {
+                    const browserProvider = new BrowserProvider(window.ethereum);
+                    const listingUser = new Contract(LISTING_ADDRESS, ListingABI, browserProvider);
+                    const myInvWei = await listingUser.invested(address);
+                    setMyInvestment(Number(myInvWei) / 1_000_000);
+                }
+            } catch (err) {
+                console.error("Error fetching modal data:", err);
+            }
+        };
+        fetchData();
+    }, [isOpen, address, txHash]); // Refresh on open or after transaction
+
     // Mock calculations
     const noteSize = 455000;
-    // const interestRate = 5.0; // %
+    const availableAmount = noteSize - totalRaised;
     const share = investmentAmount / noteSize;
-    // Simple Interest P&I estimate (Mock: Pro-rata of $6000 total payment)
     const totalMonthlyPayment = 6000;
     const monthlyPI = totalMonthlyPayment * share;
-    const servicingFee = monthlyPI * 0.01; // 1% fee estimate
+    const servicingFee = monthlyPI * 0.01;
     const netCashFlow = monthlyPI - servicingFee;
 
     const documents = [
@@ -58,27 +115,61 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) 
         if (agreed) setStep(2);
     };
 
-    const handlePay = () => {
-        // Mock payment & Persistence
-        const newInvestment = {
-            walletAddress: address || '0xWalletNotConnected',
-            amount: investmentAmount,
-            share: share,
-            timestamp: new Date().toISOString()
-        };
+    const handlePay = async () => {
+        if (!window.ethereum) {
+            setError("No crypto wallet found. Please install MetaMask.");
+            return;
+        }
 
-        // Save to localStorage
-        const storedInvestments = localStorage.getItem('investor_investments');
-        const investments = storedInvestments ? JSON.parse(storedInvestments) : [];
-        investments.push(newInvestment);
-        localStorage.setItem('investor_investments', JSON.stringify(investments));
+        setError(null);
+        setIsApproving(true);
 
-        onInvest(investmentAmount);
-        onClose();
-        alert(`Investment of ${formatCurrency(investmentAmount)} confirmed!`);
-        // Reset state
-        setStep(1);
-        setAgreed(false);
+        try {
+            const provider = new BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const amountWei = BigInt(investmentAmount) * 1_000_000n; // 6 decimals
+
+            // 1. Approve
+            const demoUSD = new Contract(DEMOUSD_ADDRESS, ERC20ABI, signer);
+            console.log("Approving...", DEMOUSD_ADDRESS, LISTING_ADDRESS);
+            const approveTx = await demoUSD.approve(LISTING_ADDRESS, amountWei);
+            await approveTx.wait();
+            setIsApproving(false);
+
+            // 2. Invest
+            setIsInvesting(true);
+            const listing = new Contract(LISTING_ADDRESS, ListingABI, signer);
+            console.log("Investing...", LISTING_ADDRESS);
+            const investTx = await listing.invest(amountWei);
+            const receipt = await investTx.wait();
+
+            console.log("Invested!", receipt.hash);
+            setTxHash(receipt.hash);
+            setIsInvesting(false);
+
+            // Mock persistence for UI sync (optional, can rely on on-chain read)
+            const newInvestment = {
+                walletAddress: address || '0xWalletNotConnected',
+                amount: investmentAmount,
+                share: share,
+                timestamp: new Date().toISOString(),
+                txHash: receipt.hash
+            };
+            const storedInvestments = localStorage.getItem('investor_investments');
+            const investments = storedInvestments ? JSON.parse(storedInvestments) : [];
+            investments.push(newInvestment);
+            localStorage.setItem('investor_investments', JSON.stringify(investments));
+
+            onInvest(investmentAmount);
+            // alert(`Investment confirmed! Tx: ${receipt.hash}`);
+            // Don't close immediately, let them see the success state
+
+        } catch (err: any) {
+            console.error(err);
+            setError(err.reason || err.message || "Transaction failed");
+            setIsApproving(false);
+            setIsInvesting(false);
+        }
     };
 
     return (
@@ -164,92 +255,133 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) 
                     </>
                 ) : (
                     <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <div>
-                                <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>Make Investment</h2>
-                                <div style={{ fontSize: '14px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    Time Left: <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>30 Days</span>
+                        {txHash ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                <div style={{
+                                    width: '64px', height: '64px', backgroundColor: '#d1fae5', borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto',
+                                    color: '#059669'
+                                }}>
+                                    <CheckCircle size={32} />
                                 </div>
-                            </div>
-                        </div>
+                                <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px', color: '#111827' }}>Investment Successful!</h2>
+                                <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+                                    Your funds have been securely transferred to the listing contract.
+                                </p>
 
-                        {/* Summary Card */}
-                        <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Total Note Size</div>
-                                <div style={{ fontSize: '14px', fontWeight: 700 }}>{formatCurrency(noteSize)}</div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Invested</div>
-                                <div style={{ fontSize: '14px', fontWeight: 700 }}>{formatCurrency(0)} (0%)</div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Available</div>
-                                <div style={{ fontSize: '14px', fontWeight: 700, color: '#166534' }}>{formatCurrency(455000)}</div>
-                            </div>
-                        </div>
+                                <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '24px', textAlign: 'left' }}>
+                                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Transaction Hash</div>
+                                    <div style={{ fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all', color: '#374151' }}>
+                                        {txHash}
+                                    </div>
+                                    <a
+                                        href={`https://explorer.sepolia.mantle.xyz/tx/${txHash}`} // Mantle Sepolia Explorer
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{ display: 'inline-block', marginTop: '8px', fontSize: '12px', color: '#2563eb', textDecoration: 'none' }}
+                                    >
+                                        View on Block Explorer ↗
+                                    </a>
+                                </div>
 
-                        {/* Input */}
-                        <div style={{ marginBottom: '24px' }}>
-                            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Investment Amount (min $1,000)</label>
-                            <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 600, color: '#374151' }}>$</span>
-                                <input
-                                    type="number"
-                                    value={investmentAmount}
-                                    onChange={(e) => setInvestmentAmount(Number(e.target.value))}
-                                    style={{
-                                        width: '100%', padding: '12px 16px 12px 32px', borderRadius: '8px', border: '1px solid #d1d5db',
-                                        fontSize: '16px', fontWeight: 500
-                                    }}
-                                />
+                                <Button
+                                    onClick={onClose}
+                                    style={{ width: '100%', borderRadius: '50px', backgroundColor: 'black', color: 'white' }}
+                                >
+                                    Done
+                                </Button>
                             </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                                    <div>
+                                        <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>Make Investment</h2>
+                                        <div style={{ fontSize: '14px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            Time Left: <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>30 Days</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        {/* Calculations */}
-                        <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                <span style={{ fontSize: '14px', color: '#64748b' }}>Ownership Share</span>
-                                <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>{(share * 100).toFixed(2)}%</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                <span style={{ fontSize: '14px', color: '#64748b' }}>Expected Monthly P&I</span>
-                                <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>{formatCurrency(monthlyPI)} / mo</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px dashed #cbd5e1' }}>
-                                <span style={{ fontSize: '14px', color: '#64748b' }}>Est. Platform Fee (1%)</span>
-                                <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>- {formatCurrency(servicingFee)} / mo</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>Net Monthly Cash Flow</span>
-                                <span style={{ fontSize: '18px', fontWeight: 700, color: '#166534' }}>{formatCurrency(netCashFlow)} / mo</span>
-                            </div>
-                        </div>
+                                {/* Summary Card */}
+                                <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center' }}>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Total Note Size</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700 }}>{formatCurrency(noteSize)}</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Invested</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700 }}>{formatCurrency(myInvestment)} ({(myInvestment / noteSize * 100).toFixed(1)}%)</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>Available</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#166534' }}>{formatCurrency(availableAmount)}</div>
+                                    </div>
+                                </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
-                            <span style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
-                                *Funds are committed only once the offering reaches 100% subscription.
-                            </span>
-                        </div>
+                                {/* Input */}
+                                <div style={{ marginBottom: '24px' }}>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>Investment Amount (min $1,000)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 600, color: '#374151' }}>$</span>
+                                        <input
+                                            type="number"
+                                            value={investmentAmount}
+                                            onChange={(e) => setInvestmentAmount(Number(e.target.value))}
+                                            disabled={isApproving || isInvesting}
+                                            style={{
+                                                width: '100%', padding: '12px 16px 12px 32px', borderRadius: '8px', border: '1px solid #d1d5db',
+                                                fontSize: '16px', fontWeight: 500
+                                            }}
+                                        />
+                                    </div>
+                                </div>
 
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <Button
-                                onClick={() => setStep(1)}
-                                variant="outline"
-                                style={{ flex: 1, borderRadius: '50px', padding: '14px' }}
-                            >
-                                Back
-                            </Button>
-                            <Button
-                                onClick={handlePay}
-                                style={{
-                                    flex: 2, backgroundColor: 'black', color: 'white',
-                                    borderRadius: '50px', padding: '14px', fontSize: '15px', fontWeight: 600
-                                }}
-                            >
-                                Pay {formatCurrency(investmentAmount)}
-                            </Button>
-                        </div>
+                                {/* Calculations */}
+                                <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                        <span style={{ fontSize: '14px', color: '#64748b' }}>Ownership Share</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>{(share * 100).toFixed(2)}%</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                        <span style={{ fontSize: '14px', color: '#64748b' }}>Expected Monthly P&I</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>{formatCurrency(monthlyPI)} / mo</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>Net Monthly Cash Flow</span>
+                                        <span style={{ fontSize: '18px', fontWeight: 700, color: '#166534' }}>{formatCurrency(netCashFlow)} / mo</span>
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fee2e2', borderRadius: '8px', color: '#b91c1c', fontSize: '14px' }}>
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <Button
+                                        onClick={() => setStep(1)}
+                                        variant="outline"
+                                        disabled={isApproving || isInvesting}
+                                        style={{ flex: 1, borderRadius: '50px', padding: '14px' }}
+                                    >
+                                        Back
+                                    </Button>
+                                    <Button
+                                        onClick={handlePay}
+                                        disabled={isApproving || isInvesting}
+                                        style={{
+                                            flex: 2, backgroundColor: 'black', color: 'white',
+                                            borderRadius: '50px', padding: '14px', fontSize: '15px', fontWeight: 600,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                                        }}
+                                    >
+                                        {(isApproving || isInvesting) && <Loader2 className="animate-spin" size={18} />}
+                                        {isApproving ? 'Approving...' : isInvesting ? 'Processing...' : `Pay ${formatCurrency(investmentAmount)}`}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
                     </>
                 )}
 

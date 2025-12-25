@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react';
 import Button from '../ui/Button';
+import { ethers } from 'ethers';
+import { getContractSnapshot, getPaymentEvents } from '../../services/paymentService';
+import { generatePaymentLeafHash, computeMerkleRoot } from '../../utils/crypto';
+import { callContractAsTSF } from '../../utils/blockchain';
+import ListingABI from '../../abis/Listing.json';
 
 interface NoteValuationModalProps {
     isOpen: boolean;
@@ -9,16 +14,20 @@ interface NoteValuationModalProps {
     upb: number; // Unpaid Principal Balance
 }
 
+const LISTING_ADDRESS = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+
 const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList }) => {
     const [step, setStep] = useState<'pricing' | 'cashout' | 'processing' | 'confirmed'>('pricing');
     const [selectedPreset, setSelectedPreset] = useState<'fast' | 'market' | 'premium' | 'custom' | null>(null);
     const [customPrice, setCustomPrice] = useState<string>('500000');
+    const [txHash, setTxHash] = useState<string>('');
 
     // Reset state when opening
     useEffect(() => {
         if (isOpen) {
             setStep('pricing');
             setSelectedPreset('market'); // Default selection
+            setTxHash('');
         }
     }, [isOpen]);
 
@@ -48,12 +57,62 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
         setStep('cashout');
     };
 
-    const handleList = () => {
-        setStep('processing');
-        setTimeout(() => {
+    const handleList = async () => {
+        try {
+            setStep('processing');
+
+            // 1. Gather metadata from localStorage
+            const contractSnapshot = getContractSnapshot();
+            const paymentEvents = getPaymentEvents();
+
+            // 2. Compute payment ledger root
+            const leaves = await Promise.all(
+                paymentEvents.map(e => generatePaymentLeafHash(e as any))
+            );
+            const paymentLedgerRoot = await computeMerkleRoot(leaves);
+
+            console.log("Listing note on blockchain...");
+            console.log("Metadata:", {
+                contractHash: contractSnapshot.contractHash,
+                creditHash: contractSnapshot.creditHash,
+                anchorHash: contractSnapshot.anchorHash,
+                paymentLedgerRoot,
+                price: currentPrice
+            });
+
+            // 3. Convert hashes to bytes32 format
+            const contractHashBytes32 = ethers.id(contractSnapshot.contractHash);
+            const creditHashBytes32 = ethers.id(contractSnapshot.creditHash);
+            const anchorHashBytes32 = ethers.id(contractSnapshot.anchorHash);
+            const paymentRootBytes32 = ethers.id(paymentLedgerRoot);
+
+            // 4. Call contract as TSF (custodial - signs on behalf of homeowner)
+            const txResult = await callContractAsTSF(
+                LISTING_ADDRESS,
+                ListingABI,
+                'updateNoteMetadata',
+                [
+                    contractHashBytes32,
+                    creditHashBytes32,
+                    anchorHashBytes32,
+                    paymentRootBytes32,
+                    ethers.parseUnits(currentPrice.toString(), 6)
+                ]
+            );
+
+            console.log("Note listed successfully!");
+            setTxHash(txResult.hash);
+            localStorage.setItem('tsf_note_listing_tx', txResult.hash);
+            localStorage.setItem('tsf_note_listed', 'true');
+
             setStep('confirmed');
             onList(currentPrice);
-        }, 2500);
+
+        } catch (error: any) {
+            console.error("List Note failed:", error);
+            setStep('pricing');
+            alert(`Failed to list note: ${error.message || 'Unknown error'}`);
+        }
     };
 
     return (
@@ -237,22 +296,33 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                             <div style={{ width: '64px', height: '64px', backgroundColor: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <CheckCircle size={32} color="#166534" />
                             </div>
-                            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', marginBottom: '16px' }}>Listed for Investment (Mock)</h2>
+                            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', marginBottom: '16px' }}>Note Listed Successfully!</h2>
 
                             <div style={{ backgroundColor: '#111827', borderRadius: '8px', padding: '16px', marginBottom: '24px', textAlign: 'left', fontFamily: 'monospace', fontSize: '12px', color: '#e5e7eb' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                     <span style={{ color: '#9ca3af' }}>Status:</span>
-                                    <span style={{ color: '#4ade80' }}>Confirmed on Testnet</span>
+                                    <span style={{ color: '#4ade80' }}>Confirmed on Mantle Sepolia</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                     <span style={{ color: '#9ca3af' }}>Tx Hash:</span>
-                                    <span>0x71c...9a2b</span>
+                                    <span>{txHash ? `${txHash.slice(0, 10)}...${txHash.slice(-8)}` : 'N/A'}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span style={{ color: '#9ca3af' }}>Contract:</span>
-                                    <span>0x8f3...4k9p</span>
+                                    <span>{LISTING_ADDRESS.slice(0, 10)}...{LISTING_ADDRESS.slice(-8)}</span>
                                 </div>
                             </div>
+
+                            {txHash && (
+                                <a
+                                    href={`https://sepolia.mantlescan.xyz/tx/${txHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#4f46e5', fontSize: '14px', textDecoration: 'none', marginBottom: '16px' }}
+                                >
+                                    View on MantleScan <ExternalLink size={14} />
+                                </a>
+                            )}
                         </div>
                     )}
                 </div>

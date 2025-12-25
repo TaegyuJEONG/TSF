@@ -7,7 +7,11 @@ module.exports = {
   networks: {
     mantleSepolia: {
       url: "https://rpc.sepolia.mantle.xyz",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: process.env.SPV_PRIVATE_KEY
+        ? [process.env.SPV_PRIVATE_KEY]
+        : process.env.PRIVATE_KEY
+          ? [process.env.PRIVATE_KEY]
+          : [],
     },
   },
 };

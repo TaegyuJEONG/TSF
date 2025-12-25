@@ -18,10 +18,10 @@ export const submitCustodialTransaction = async (
     anchorPayloadJson: string
 ): Promise<TransactionResult> => {
     try {
-        const privateKey = import.meta.env.VITE_TRUST_PARTNER_PRIVATE_KEY;
+        const privateKey = import.meta.env.VITE_TSF_PRIVATE_KEY;
 
         if (!privateKey) {
-            throw new Error("Missing Trust Partner Private Key");
+            throw new Error("Missing TSF Private Key");
         }
 
         // Initialize Provider
@@ -67,11 +67,6 @@ export const submitCustodialTransaction = async (
 
 /**
  * Verifies a transaction by fetching it and returning the decoded input data.
- * @param txHash The transaction hash to verify.
- * @returns The anchored data string (utf8).
- */
-/**
- * Verifies a transaction by fetching it and returning the decoded input data.
  * Includes retry logic to handle transient RPC errors (e.g. block not found).
  * @param txHash The transaction hash to verify.
  * @returns The anchored data string (utf8).
@@ -103,4 +98,102 @@ export const verifyTransaction = async (txHash: string): Promise<string> => {
     }
 
     throw new Error("Transaction verification failed after retries");
+};
+
+/**
+ * Calls a smart contract function using TSF's private key (custodial).
+ * Used for List Note action (TSF signs on behalf of homeowner/buyer who don't have wallets).
+ */
+export const callContractAsTSF = async (
+    contractAddress: string,
+    abi: any[],
+    functionName: string,
+    args: any[]
+): Promise<TransactionResult> => {
+    try {
+        const privateKey = import.meta.env.VITE_TSF_PRIVATE_KEY;
+
+        if (!privateKey) {
+            throw new Error("Missing TSF Private Key");
+        }
+
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        const wallet = new ethers.Wallet(privateKey, provider);
+        const contract = new ethers.Contract(contractAddress, abi, wallet);
+
+        console.log(`Calling ${functionName} as TSF (${wallet.address})...`);
+
+        // Get current nonce explicitly to avoid conflicts
+        const nonce = await provider.getTransactionCount(wallet.address, 'pending');
+        console.log(`Using nonce: ${nonce}`);
+
+        const tx = await contract[functionName](...args, { nonce });
+        console.log("Transaction submitted:", tx.hash);
+
+        const receipt = await tx.wait(1);
+
+        if (!receipt) {
+            throw new Error("Transaction failed to confirm");
+        }
+
+        return {
+            hash: receipt.hash,
+            from: wallet.address,
+            network: 'Mantle Sepolia Testnet',
+            status: 'confirmed'
+        };
+
+    } catch (error) {
+        console.error("Custodial contract call failed:", error);
+        throw error;
+    }
+};
+
+/**
+ * Calls a smart contract function using SPV's private key (custodial).
+ * Used for Make Payment and depositYield actions.
+ */
+export const callContractAsSPV = async (
+    contractAddress: string,
+    abi: any[],
+    functionName: string,
+    args: any[]
+): Promise<TransactionResult> => {
+    try {
+        const privateKey = import.meta.env.VITE_SPV_PRIVATE_KEY;
+
+        if (!privateKey) {
+            throw new Error("Missing SPV Private Key");
+        }
+
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        const wallet = new ethers.Wallet(privateKey, provider);
+        const contract = new ethers.Contract(contractAddress, abi, wallet);
+
+        console.log(`Calling ${functionName} as SPV (${wallet.address})...`);
+
+        // Get current nonce explicitly to avoid conflicts
+        const nonce = await provider.getTransactionCount(wallet.address, 'pending');
+        console.log(`Using nonce: ${nonce}`);
+
+        const tx = await contract[functionName](...args, { nonce });
+        console.log("Transaction submitted:", tx.hash);
+
+        const receipt = await tx.wait(1);
+
+        if (!receipt) {
+            throw new Error("Transaction failed to confirm");
+        }
+
+        return {
+            hash: receipt.hash,
+            from: wallet.address,
+            network: 'Mantle Sepolia Testnet',
+            status: 'confirmed'
+        };
+
+    } catch (error) {
+        console.error("Custodial contract call failed:", error);
+        throw error;
+    }
 };
