@@ -14,7 +14,7 @@ interface NoteValuationModalProps {
     upb: number; // Unpaid Principal Balance
 }
 
-const LISTING_ADDRESS = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
 
 const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList }) => {
     const [step, setStep] = useState<'pricing' | 'cashout' | 'processing' | 'confirmed'>('pricing');
@@ -71,13 +71,14 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
             );
             const paymentLedgerRoot = await computeMerkleRoot(leaves);
 
-            console.log("Listing note on blockchain...");
+            console.log("Creating note on blockchain...");
             console.log("Metadata:", {
                 contractHash: contractSnapshot.contractHash,
                 creditHash: contractSnapshot.creditHash,
                 anchorHash: contractSnapshot.anchorHash,
                 paymentLedgerRoot,
-                price: currentPrice
+                price: currentPrice,
+                goal: currentPrice  // Using listing price as goal
             });
 
             // 3. Convert hashes to bytes32 format
@@ -86,32 +87,37 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
             const anchorHashBytes32 = ethers.id(contractSnapshot.anchorHash);
             const paymentRootBytes32 = ethers.id(paymentLedgerRoot);
 
-            // 4. Call contract as TSF (custodial - signs on behalf of homeowner)
+            // 4. Call createNote (returns noteId)
             const txResult = await callContractAsTSF(
                 LISTING_ADDRESS,
                 ListingABI,
-                'updateNoteMetadata',
+                'createNote',
                 [
                     contractHashBytes32,
                     creditHashBytes32,
                     anchorHashBytes32,
                     paymentRootBytes32,
-                    ethers.parseUnits(currentPrice.toString(), 6)
+                    ethers.parseUnits(currentPrice.toString(), 6),
+                    ethers.parseUnits(currentPrice.toString(), 6)  // goal
                 ]
             );
 
-            console.log("Note listed successfully!");
-            setTxHash(txResult.hash);
-            localStorage.setItem('tsf_note_listing_tx', txResult.hash);
-            localStorage.setItem('tsf_note_listed', 'true');
+            console.log("Note created successfully!", txResult);
 
+            // Parse noteId from transaction receipt events
+            // For now, assume it's noteId 1 (or increment based on localStorage)
+            const currentNoteId = parseInt(localStorage.getItem('tsf_last_note_id') || '0') + 1;
+            localStorage.setItem('tsf_last_note_id', currentNoteId.toString());
+            localStorage.setItem(`tsf_note_${currentNoteId}_tx`, txResult.hash);
+
+            setTxHash(txResult.hash);
             setStep('confirmed');
             onList(currentPrice);
 
         } catch (error: any) {
-            console.error("List Note failed:", error);
+            console.error("Create Note failed:", error);
             setStep('pricing');
-            alert(`Failed to list note: ${error.message || 'Unknown error'}`);
+            alert(`Failed to create note: ${error.message || 'Unknown error'}`);
         }
     };
 

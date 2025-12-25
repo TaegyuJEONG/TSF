@@ -7,7 +7,7 @@ import { useWallet } from '../hooks/useWallet';
 import { BrowserProvider, Contract, ethers } from 'ethers';
 import ListingABI from '../abis/Listing.json';
 
-const LISTING_ADDRESS = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
 
 interface PaymentEvent {
     receivedAt: string;
@@ -118,7 +118,7 @@ const InvestorPayments: React.FC = () => {
             try {
                 const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
                 const listing = new Contract(LISTING_ADDRESS, ListingABI, provider);
-                const amountWei = await listing.claimable(address);
+                const amountWei = await listing.claimable(1, address); // noteId = 1
                 // Convert 6 decimals to number
                 setClaimableAmount(Number(amountWei) / 1_000_000);
             } catch (err) {
@@ -140,7 +140,7 @@ const InvestorPayments: React.FC = () => {
             const listing = new Contract(LISTING_ADDRESS, ListingABI, signer);
 
             console.log("Claiming...");
-            const tx = await listing.claim();
+            const tx = await listing.claim(1); // noteId = 1
             await tx.wait();
 
             alert("Funds claimed successfully!");

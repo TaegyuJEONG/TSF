@@ -7,47 +7,47 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title Listing
- * @dev Investment pool with capped fundraising and pro-rata yield distribution (pull-based).
- * Uses the accumulated dividend per share pattern for O(1) complexity yield distribution.
+ * @dev Multi-Note investment pool with capped fundraising and pro-rata yield distribution per note.
+ * Supports multiple notes with independent investment tracking and dividend distribution.
  */
 contract Listing is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    // --- State Variables ---
+    // --- Immutables ---
     IERC20 public immutable token;       // DemoUSD (6 decimals)
     address public immutable spv;        // Authorized SPV address
-    uint256 public immutable goal;       // Fundraising target (6 decimals)
 
-    uint256 public raised;               // Total funds raised so far
-    bool public closed;                  // True if funding goal reached
+    // --- Note Data Structure ---
+    struct NoteMetadata {
+        address listingOwner;            // Homeowner who listed the note
+        bytes32 contractHash;            // Contract document hash
+        bytes32 creditHash;              // Credit assessment hash
+        bytes32 anchorHash;              // Anchor payload hash
+        bytes32 paymentLedgerRoot;       // Merkle root of payment history
+        uint256 listingPrice;            // Price at which note was listed
+        uint256 listedAt;                // Timestamp when listed
+        uint256 goal;                    // Fundraising target for this note
+        uint256 raised;                  // Total funds raised for this note
+        bool closed;                     // True if funding goal reached
+    }
 
-    // Dividend Accounting
-    // Scaled by 1e18 to handle precision loss (since token is 6 decimals)
-    uint256 public accDivPerShare;
+    // --- State Variables ---
+    uint256 public nextNoteId = 1;
     
-    // User Info
-    mapping(address => uint256) public invested;     // Amount invested by user
-    mapping(address => uint256) public rewardDebt;   // Reward debt for dividend tracking
+    mapping(uint256 => NoteMetadata) public notes;
+    mapping(uint256 => mapping(address => uint256)) public invested;
+    mapping(uint256 => mapping(address => uint256)) public rewardDebt;
+    mapping(uint256 => uint256) public accDivPerShare;
 
     // Helper for dividend calculation consistency
     uint256 private constant SCALE = 1e18;
 
-    // --- Note Metadata ---
-    address public listingOwner;         // Homeowner who listed the note
-    bytes32 public contractHash;         // Contract document hash from /contract
-    bytes32 public creditHash;           // Credit assessment hash from /contract
-    bytes32 public anchorHash;           // Anchor payload hash
-    bytes32 public paymentLedgerRoot;    // Merkle root of payment history
-    uint256 public listingPrice;         // Price at which note was listed
-    uint256 public listedAt;             // Timestamp when listed
-
     // --- Events ---
-    event Invested(address indexed user, uint256 amount, uint256 totalRaised);
-    event FundingClosed();
-    event YieldDeposited(uint256 amount, uint256 newAccDivPerShare);
-    event Claimed(address indexed user, uint256 amount);
-    event NoteMetadataUpdated(address indexed owner, bytes32 contractHash, uint256 listingPrice);
-    event PaymentReceived(address indexed payer, uint256 amount, uint256 newAccDivPerShare);
+    event NoteCreated(uint256 indexed noteId, address indexed owner, uint256 listingPrice, uint256 goal, uint256 listedAt);
+    event Invested(uint256 indexed noteId, address indexed user, uint256 amount, uint256 totalRaised);
+    event FundingClosed(uint256 indexed noteId);
+    event PaymentReceived(uint256 indexed noteId, address indexed payer, uint256 amount, uint256 newAccDivPerShare);
+    event Claimed(uint256 indexed noteId, address indexed user, uint256 amount);
 
     // --- Modifiers ---
     modifier onlySPV() {
@@ -55,42 +55,87 @@ contract Listing is ReentrancyGuard {
         _;
     }
 
+    modifier noteExists(uint256 noteId) {
+        require(noteId > 0 && noteId < nextNoteId, "Note does not exist");
+        _;
+    }
+
     /**
      * @param _token Address of DemoUSD
-     * @param _goal Fundraising goal (in token atomic units, e.g. 6 decimals)
      * @param _spv Authorized SPV address
      */
-    constructor(address _token, uint256 _goal, address _spv) {
+    constructor(address _token, address _spv) {
         require(_token != address(0), "Invalid token");
         require(_spv != address(0), "Invalid SPV");
-        require(_goal > 0, "Invalid goal");
 
         token = IERC20(_token);
-        goal = _goal;
         spv = _spv;
     }
 
     /**
-     * @dev Invest tokens into the pool.
+     * @dev Create a new note. Called by homeowner when listing.
+     * @param _contractHash Contract document hash
+     * @param _creditHash Credit assessment hash
+     * @param _anchorHash Anchor payload hash
+     * @param _paymentLedgerRoot Merkle root of payment history
+     * @param _listingPrice Price at which note is listed
+     * @param _goal Fundraising goal for this note
+     * @return noteId The ID of the newly created note
+     */
+    function createNote(
+        bytes32 _contractHash,
+        bytes32 _creditHash,
+        bytes32 _anchorHash,
+        bytes32 _paymentLedgerRoot,
+        uint256 _listingPrice,
+        uint256 _goal
+    ) external returns (uint256) {
+        require(_listingPrice > 0, "Invalid price");
+        require(_goal > 0, "Invalid goal");
+
+        uint256 noteId = nextNoteId++;
+
+        notes[noteId] = NoteMetadata({
+            listingOwner: msg.sender,
+            contractHash: _contractHash,
+            creditHash: _creditHash,
+            anchorHash: _anchorHash,
+            paymentLedgerRoot: _paymentLedgerRoot,
+            listingPrice: _listingPrice,
+            listedAt: block.timestamp,
+            goal: _goal,
+            raised: 0,
+            closed: false
+        });
+
+        emit NoteCreated(noteId, msg.sender, _listingPrice, _goal, block.timestamp);
+        
+        return noteId;
+    }
+
+    /**
+     * @dev Invest tokens into a specific note.
+     * @param noteId ID of the note to invest in
      * @param amount Amount to invest (6 decimals)
      */
-    function invest(uint256 amount) external nonReentrant {
-        require(!closed, "Funding closed");
+    function invest(uint256 noteId, uint256 amount) external nonReentrant noteExists(noteId) {
+        NoteMetadata storage note = notes[noteId];
+        
+        require(!note.closed, "Funding closed");
         require(amount > 0, "Amount must be > 0");
         
         // Cap amount to remaining goal
-        uint256 remaining = goal - raised;
+        uint256 remaining = note.goal - note.raised;
         if (amount > remaining) {
             amount = remaining;
         }
 
         // 1. Claim pending rewards first (if any previously invested)
-        // This is crucial for the MasterChef/Dividend pattern standard
-        if (invested[msg.sender] > 0) {
-            uint256 pending = (invested[msg.sender] * accDivPerShare / SCALE) - rewardDebt[msg.sender];
+        if (invested[noteId][msg.sender] > 0) {
+            uint256 pending = (invested[noteId][msg.sender] * accDivPerShare[noteId] / SCALE) - rewardDebt[noteId][msg.sender];
             if (pending > 0) {
                 token.safeTransfer(msg.sender, pending);
-                emit Claimed(msg.sender, pending);
+                emit Claimed(noteId, msg.sender, pending);
             }
         }
 
@@ -98,133 +143,113 @@ contract Listing is ReentrancyGuard {
         token.safeTransferFrom(msg.sender, address(this), amount);
 
         // 3. Update state
-        invested[msg.sender] += amount;
-        raised += amount;
+        invested[noteId][msg.sender] += amount;
+        note.raised += amount;
         
         // 4. Update reward debt
-        // rewardDebt is what they are NOT entitled to (rewards from before they entered/increased)
-        rewardDebt[msg.sender] = invested[msg.sender] * accDivPerShare / SCALE;
+        rewardDebt[noteId][msg.sender] = invested[noteId][msg.sender] * accDivPerShare[noteId] / SCALE;
 
-        emit Invested(msg.sender, amount, raised);
+        emit Invested(noteId, msg.sender, amount, note.raised);
 
         // 5. Check if goal reached
-        if (raised >= goal) {
-            closed = true;
-            emit FundingClosed();
+        if (note.raised >= note.goal) {
+            note.closed = true;
+            emit FundingClosed(noteId);
         }
     }
 
     /**
-     * @dev SPV deposits yield for distribution.
-     * @param amount Amount of yield tokens (6 decimals)
+     * @dev Buyer makes payment directly to contract for a specific note.
+     * Automatically distributes pro-rata to all investors of that note.
+     * @param noteId ID of the note this payment is for
+     * @param amount Amount to pay
      */
-    function depositYield(uint256 amount) external onlySPV nonReentrant {
-        require(closed, "Funding not closed yet");
-        require(raised > 0, "No investors");
-        require(amount > 0, "Amount must be > 0");
-
-        token.safeTransferFrom(msg.sender, address(this), amount);
-
-        // Update accumulator
-        // accDivPerShare += amount * SCALE / totalInvested
-        // Note: raised is totalInvested here
-        accDivPerShare += (amount * SCALE) / raised;
-
-        emit YieldDeposited(amount, accDivPerShare);
-    }
-
-    /**
-     * @dev Investor claims their available yield.
-     */
-    function claim() external nonReentrant {
-        require(invested[msg.sender] > 0, "Not an investor");
-
-        uint256 pending = (invested[msg.sender] * accDivPerShare / SCALE) - rewardDebt[msg.sender];
-        require(pending > 0, "Nothing to claim");
-
-        // Update debt to reflect that they have claimed everything up to now
-        // Effectively, rewardDebt becomes "all rewards up to current accDivPerShare"
-        rewardDebt[msg.sender] += pending;
-
-        token.safeTransfer(msg.sender, pending);
+    function makePayment(uint256 noteId, uint256 amount) external nonReentrant noteExists(noteId) {
+        NoteMetadata storage note = notes[noteId];
         
-        emit Claimed(msg.sender, pending);
-    }
-
-    /**
-     * @dev View function to see claimable amount
-     */
-    function claimable(address user) external view returns (uint256) {
-        if (invested[user] == 0) return 0;
-        return (invested[user] * accDivPerShare / SCALE) - rewardDebt[user];
-    }
-
-    /**
-     * @dev Homeowner lists note by storing metadata on-chain.
-     * Anyone can call this (typically the homeowner via MetaMask).
-     * Can only be called once (metadata cannot be changed after set).
-     */
-    function updateNoteMetadata(
-        bytes32 _contractHash,
-        bytes32 _creditHash,
-        bytes32 _anchorHash,
-        bytes32 _paymentLedgerRoot,
-        uint256 _listingPrice
-    ) external {
-        require(contractHash == bytes32(0), "Metadata already set");
-        require(_listingPrice > 0, "Invalid price");
-
-        listingOwner = msg.sender;
-        contractHash = _contractHash;
-        creditHash = _creditHash;
-        anchorHash = _anchorHash;
-        paymentLedgerRoot = _paymentLedgerRoot;
-        listingPrice = _listingPrice;
-        listedAt = block.timestamp;
-
-        emit NoteMetadataUpdated(msg.sender, _contractHash, _listingPrice);
-    }
-
-    /**
-     * @dev Buyer makes payment directly to contract.
-     * Automatically distributes pro-rata to all investors.
-     * Replaces the manual SPV depositYield flow.
-     */
-    function makePayment(uint256 amount) external nonReentrant {
-        require(closed, "Funding not closed yet");
-        require(raised > 0, "No investors");
+        require(note.closed, "Funding not closed yet");
+        require(note.raised > 0, "No investors");
         require(amount > 0, "Amount must be > 0");
 
         // Transfer from buyer to this contract
         token.safeTransferFrom(msg.sender, address(this), amount);
 
         // Update accumulator (same logic as depositYield)
-        accDivPerShare += (amount * SCALE) / raised;
+        accDivPerShare[noteId] += (amount * SCALE) / note.raised;
 
-        emit PaymentReceived(msg.sender, amount, accDivPerShare);
+        emit PaymentReceived(noteId, msg.sender, amount, accDivPerShare[noteId]);
     }
 
     /**
-     * @dev Get all note metadata.
-     * Used by investor UI to display note information.
+     * @dev Investor claims their available yield from a specific note.
+     * @param noteId ID of the note to claim from
      */
-    function getNoteMetadata() external view returns (
-        address,
-        bytes32,
-        bytes32,
-        bytes32,
-        bytes32,
-        uint256,
-        uint256
+    function claim(uint256 noteId) external nonReentrant noteExists(noteId) {
+        require(invested[noteId][msg.sender] > 0, "Not an investor");
+
+        uint256 pending = (invested[noteId][msg.sender] * accDivPerShare[noteId] / SCALE) - rewardDebt[noteId][msg.sender];
+        require(pending > 0, "Nothing to claim");
+
+        // Update debt to reflect that they have claimed everything up to now
+        rewardDebt[noteId][msg.sender] += pending;
+
+        token.safeTransfer(msg.sender, pending);
+        
+        emit Claimed(noteId, msg.sender, pending);
+    }
+
+    /**
+     * @dev View function to see claimable amount for a specific note.
+     * @param noteId ID of the note
+     * @param user Address of the user
+     */
+    function claimable(uint256 noteId, address user) external view noteExists(noteId) returns (uint256) {
+        if (invested[noteId][user] == 0) return 0;
+        return (invested[noteId][user] * accDivPerShare[noteId] / SCALE) - rewardDebt[noteId][user];
+    }
+
+    /**
+     * @dev Get metadata for a specific note.
+     * @param noteId ID of the note
+     */
+    function getNoteMetadata(uint256 noteId) external view noteExists(noteId) returns (
+        address listingOwner,
+        bytes32 contractHash,
+        bytes32 creditHash,
+        bytes32 anchorHash,
+        bytes32 paymentLedgerRoot,
+        uint256 listingPrice,
+        uint256 listedAt
     ) {
+        NoteMetadata storage note = notes[noteId];
         return (
-            listingOwner,
-            contractHash,
-            creditHash,
-            anchorHash,
-            paymentLedgerRoot,
-            listingPrice,
-            listedAt
+            note.listingOwner,
+            note.contractHash,
+            note.creditHash,
+            note.anchorHash,
+            note.paymentLedgerRoot,
+            note.listingPrice,
+            note.listedAt
         );
+    }
+
+    /**
+     * @dev Get funding status for a specific note.
+     * @param noteId ID of the note
+     */
+    function getNoteStatus(uint256 noteId) external view noteExists(noteId) returns (
+        uint256 goal,
+        uint256 raised,
+        bool closed
+    ) {
+        NoteMetadata storage note = notes[noteId];
+        return (note.goal, note.raised, note.closed);
+    }
+
+    /**
+     * @dev Get total number of notes created.
+     */
+    function getTotalNotes() external view returns (uint256) {
+        return nextNoteId - 1;
     }
 }

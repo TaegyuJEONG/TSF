@@ -95,7 +95,7 @@ const InvestorListingDetail: React.FC = () => {
                 if (!provider) return;
 
                 // Mantle Sepolia Contract Addresses
-                const listingAddress = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+                const listingAddress = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
                 const demoUSDAddress = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
                 // Fetch Balance of DemoUSD held by Listing Contract
@@ -123,7 +123,7 @@ const InvestorListingDetail: React.FC = () => {
         const fetchNoteMetadata = async () => {
             try {
                 const provider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
-                const listingAddress = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+                const listingAddress = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
                 const listing = new ethers.Contract(listingAddress, ListingABI, provider);
 
                 // Call getNoteMetadata()

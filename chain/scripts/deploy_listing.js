@@ -19,12 +19,14 @@ async function main() {
 
     console.log("Token:", demoUsdAddress);
     console.log("Goal:", goal.toString());
-    console.log("SPV:", spvAddress);
+    console.log("Deploying Listing contract...");
 
     const Listing = await hre.ethers.getContractFactory("Listing");
-    const listing = await Listing.deploy(demoUsdAddress, goal, spvAddress);
-
-    await listing.waitForDeployment();
+    const listing = await Listing.deploy(
+        demoUsdAddress,  // token
+        spvAddress       // spv (removed goal - now per-note)
+    );
+    listing.waitForDeployment();
     const address = await listing.getAddress();
 
     console.log("Listing deployed to:", address);

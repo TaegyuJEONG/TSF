@@ -16,7 +16,7 @@ interface PaymentProcessModalProps {
     onPaymentSuccess: (event: PaymentEvent) => void;
 }
 
-const LISTING_ADDRESS = "0x77f4C936dd0092b30521c4CBa95bcCe4c2CbCD3a";
+const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
 const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
 const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
@@ -104,7 +104,7 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                     LISTING_ADDRESS,
                     ListingABI,
                     'makePayment',
-                    [amountWei]
+                    [1, amountWei] // noteId = 1
                 );
 
                 console.log("Payment successful! TX:", paymentTxResult.hash);
