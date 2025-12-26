@@ -14,7 +14,7 @@ interface PaymentEvent {
     depositAmount: number;
     yourShare: number;
     share: number;
-    status: 'Paid' | 'Claimed';
+    status: 'Pending' | 'Claimed';
     txHash: string;
 }
 
@@ -40,26 +40,30 @@ const InvestorPayments: React.FC = () => {
                 const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
                 const listing = new Contract(LISTING_ADDRESS, ListingABI, provider);
 
+                // Get noteId from localStorage
+                const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
+                console.log('Using noteId:', noteId);
+
                 // Get investor's investment amount and total raised first
-                const invested = await listing.invested(address);
-                const raised = await listing.raised();
+                const noteStatus = await listing.getNoteStatus(noteId);
+                const investedAmount = await listing.invested(noteId, address);
 
                 // If investor hasn't invested, no need to fetch events
-                if (Number(invested) === 0) {
+                if (Number(investedAmount) === 0) {
                     setEvents([]);
                     return;
                 }
 
-                const share = (Number(invested) * 100) / Number(raised);
+                const share = (Number(investedAmount) * 100) / Number(noteStatus.raised);
 
                 // Get investor's current reward debt to determine what's been claimed
-                const rewardDebt = await listing.rewardDebt(address);
+                const rewardDebt = await listing.rewardDebt(noteId, address);
 
                 // Get all PaymentReceived events (limit to recent blocks to avoid RPC limit)
                 const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 10000); // Last ~10k blocks
+                const fromBlock = Math.max(0, currentBlock - 5000); // Last ~5k blocks (reduced from 10k)
 
-                const filter = listing.filters.PaymentReceived();
+                const filter = listing.filters.PaymentReceived(noteId);
                 const paymentEvents = await listing.queryFilter(filter, fromBlock, currentBlock);
 
                 console.log(`Found ${paymentEvents.length} PaymentReceived events`);
@@ -70,14 +74,17 @@ const InvestorPayments: React.FC = () => {
                     try {
                         // Type guard to ensure event is EventLog
                         if ('args' in event && event.args) {
-                            // PaymentReceived event: args[0]=payer, args[1]=amount, args[2]=newAccDivPerShare
-                            const depositAmount = Number(event.args[1]) / 1_000_000; // 6 decimals
+                            // PaymentReceived event (multi-note): args[0]=noteId, args[1]=payer, args[2]=amount, args[3]=newAccDivPerShare
+                            const depositAmount = Number(event.args[2]) / 1_000_000; // 6 decimals
                             const investorShare = (depositAmount * share) / 100;
 
                             // Determine if this deposit has been claimed
-                            const accDivPerShare = event.args[2]; // newAccDivPerShare
-                            const earnedUpToThis = (Number(invested) * Number(accDivPerShare)) / 1e18;
-                            const claimed = earnedUpToThis <= Number(rewardDebt);
+                            const accDivPerShare = event.args[3]; // newAccDivPerShare
+                            const earnedUpToThis = (Number(investedAmount) * Number(accDivPerShare)) / 1e18;
+                            // If rewardDebt >= earnedUpToThis, it means this payment was already claimed
+                            const claimed = Number(rewardDebt) >= earnedUpToThis;
+
+                            console.log(`Payment event: earnedUpToThis=${earnedUpToThis}, rewardDebt=${Number(rewardDebt)}, claimed=${claimed}`);
 
                             // Use block number as timestamp approximation (or current time)
                             const timestamp = new Date().toISOString();
@@ -87,7 +94,7 @@ const InvestorPayments: React.FC = () => {
                                 depositAmount: depositAmount,
                                 yourShare: investorShare,
                                 share: share,
-                                status: (claimed ? 'Claimed' : 'Paid') as 'Paid' | 'Claimed',
+                                status: (claimed ? 'Claimed' : 'Pending') as 'Pending' | 'Claimed',
                                 txHash: event.transactionHash
                             });
                         } else {
@@ -118,7 +125,8 @@ const InvestorPayments: React.FC = () => {
             try {
                 const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
                 const listing = new Contract(LISTING_ADDRESS, ListingABI, provider);
-                const amountWei = await listing.claimable(1, address); // noteId = 1
+                const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
+                const amountWei = await listing.claimable(noteId, address);
                 // Convert 6 decimals to number
                 setClaimableAmount(Number(amountWei) / 1_000_000);
             } catch (err) {
@@ -139,8 +147,9 @@ const InvestorPayments: React.FC = () => {
             const signer = await provider.getSigner();
             const listing = new Contract(LISTING_ADDRESS, ListingABI, signer);
 
+            const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
             console.log("Claiming...");
-            const tx = await listing.claim(1); // noteId = 1
+            const tx = await listing.claim(noteId);
             await tx.wait();
 
             alert("Funds claimed successfully!");

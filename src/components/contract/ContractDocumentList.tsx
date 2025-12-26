@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import Button from '../ui/Button';
 import confetti from 'canvas-confetti';
 import { canonicalStringify, sha256 } from '../../utils/crypto';
-import { submitCustodialTransaction, verifyTransaction, type TransactionResult } from '../../utils/blockchain';
+import { submitCustodialTransaction, verifyTransaction, callContractAsTSF, type TransactionResult } from '../../utils/blockchain';
 import { saveContractSnapshot, clearPaymentEvents } from '../../services/paymentService';
 import { type ContractData } from './ContractInputForm';
 import { Download, ExternalLink, Copy, CheckCircle } from 'lucide-react';
+import { ethers } from 'ethers';
+import ListingABI from '../../abis/Listing.json';
+
+const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
 
 interface DocumentItemProps {
     title: string;
@@ -246,6 +250,40 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
             // Clear old payment history to start fresh for the new contract
             clearPaymentEvents();
             // ---------------------------------------
+
+            // 8. CREATE NOTE ON BLOCKCHAIN
+            console.log("Creating note on blockchain...");
+            const contractHashBytes32 = ethers.id(contractHash);
+            const creditHashBytes32 = ethers.id(creditHash);
+            const anchorHashBytes32 = ethers.id(anchorHash);
+            const paymentRootBytes32 = ethers.zeroPadValue('0x00', 32); // No payments yet
+
+            const createNoteResult = await callContractAsTSF(
+                LISTING_ADDRESS,
+                ListingABI,
+                'createNote',
+                [
+                    contractHashBytes32,
+                    creditHashBytes32,
+                    anchorHashBytes32,
+                    paymentRootBytes32,
+                    ethers.parseUnits(summary.loanAmount.toString(), 6), // listing price
+                    ethers.parseUnits('455000', 6) // goal = $455,000
+                ]
+            );
+
+            console.log("Note created! TX:", createNoteResult.hash);
+
+            // Get the newly created noteId
+            const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
+            const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for blockchain
+            const totalNotes = await listing.getTotalNotes();
+            const noteId = Number(totalNotes);
+
+            console.log("Created noteId:", noteId);
+            localStorage.setItem('tsf_last_note_id', noteId.toString());
+            localStorage.setItem(`tsf_note_${noteId}_tx`, createNoteResult.hash);
 
             setPaymentStatus('completed');
 

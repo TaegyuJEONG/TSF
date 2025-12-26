@@ -138,6 +138,10 @@ const Contract: React.FC = () => {
         setCompletionData(null);
         setShowForm(true);
 
+        // Clear contract snapshot and payment events from localStorage
+        localStorage.removeItem('tsf_contract_snapshot_v1');
+        localStorage.removeItem('tsf_payment_events_v1');
+
         // Explicitly clear/overwrite storage right away to avoid race conditions
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             step: 'input',

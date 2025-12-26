@@ -16,6 +16,7 @@ interface InvestModalProps {
     isOpen: boolean;
     onClose: () => void;
     onInvest: (amount: number) => void;
+    noteId: number;
 }
 
 // Mantle Sepolia Contract Addresses
@@ -24,7 +25,7 @@ const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 
-const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) => {
+const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, noteId }) => {
     const { address } = useWallet();
     const [step, setStep] = useState<1 | 2>(1);
     const [agreed, setAgreed] = useState(false);
@@ -50,16 +51,16 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) 
             try {
                 // 1. Total Raised (Public - Try RPC first)
                 try {
-                    const rpcProvider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+                    const rpcProvider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
                     const listingPublic = new Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
-                    const noteStatus = await listingPublic.getNoteStatus(1);
+                    const noteStatus = await listingPublic.getNoteStatus(noteId);
                     setTotalRaised(Number(noteStatus.raised) / 1_000_000);
                 } catch (e) {
                     // Fallback to browser provider if RPC fails
                     if (window.ethereum) {
                         const browserProvider = new BrowserProvider(window.ethereum);
                         const listing = new Contract(LISTING_ADDRESS, ListingABI, browserProvider);
-                        const noteStatus = await listing.getNoteStatus(1);
+                        const noteStatus = await listing.getNoteStatus(noteId);
                         setTotalRaised(Number(noteStatus.raised) / 1_000_000);
                     }
                 }
@@ -68,7 +69,7 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) 
                 if (window.ethereum && address) {
                     const browserProvider = new BrowserProvider(window.ethereum);
                     const listingUser = new Contract(LISTING_ADDRESS, ListingABI, browserProvider);
-                    const myInvWei = await listingUser.invested(1, address);
+                    const myInvWei = await listingUser.invested(noteId, address);
                     setMyInvestment(Number(myInvWei) / 1_000_000);
                 }
             } catch (err) {
@@ -140,7 +141,7 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest }) 
             setIsInvesting(true);
             const listing = new Contract(LISTING_ADDRESS, ListingABI, signer);
             console.log("Investing...", LISTING_ADDRESS);
-            const investTx = await listing.invest(1, amountWei); // noteId = 1
+            const investTx = await listing.invest(noteId, amountWei); // Pass noteId
             const receipt = await investTx.wait();
 
             console.log("Invested!", receipt.hash);

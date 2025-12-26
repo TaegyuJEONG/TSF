@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react';
 import Button from '../ui/Button';
 import { ethers } from 'ethers';
@@ -17,6 +18,7 @@ interface NoteValuationModalProps {
 const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
 
 const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList }) => {
+    const navigate = useNavigate();
     const [step, setStep] = useState<'pricing' | 'cashout' | 'processing' | 'confirmed'>('pricing');
     const [selectedPreset, setSelectedPreset] = useState<'fast' | 'market' | 'premium' | 'custom' | null>(null);
     const [customPrice, setCustomPrice] = useState<string>('500000');
@@ -87,6 +89,18 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
             const anchorHashBytes32 = ethers.id(contractSnapshot.anchorHash);
             const paymentRootBytes32 = ethers.id(paymentLedgerRoot);
 
+            console.log("=== ABOUT TO CALL callContractAsTSF ===");
+            console.log("LISTING_ADDRESS:", LISTING_ADDRESS);
+            console.log("Function:", 'createNote');
+            console.log("Args:", [
+                contractHashBytes32,
+                creditHashBytes32,
+                anchorHashBytes32,
+                paymentRootBytes32,
+                ethers.parseUnits(currentPrice.toString(), 6),
+                ethers.parseUnits('455000', 6)
+            ]);
+
             // 4. Call createNote (returns noteId)
             const txResult = await callContractAsTSF(
                 LISTING_ADDRESS,
@@ -98,21 +112,38 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                     anchorHashBytes32,
                     paymentRootBytes32,
                     ethers.parseUnits(currentPrice.toString(), 6),
-                    ethers.parseUnits(currentPrice.toString(), 6)  // goal
+                    ethers.parseUnits('455000', 6)  // goal = $455,000 (Total Investment Needed)
                 ]
             );
 
-            console.log("Note created successfully!", txResult);
+            console.log("Transaction submitted, waiting for confirmation...");
+            // Wait for transaction to be confirmed first
+            // (txResult already includes confirmation from callContractAsTSF)
 
-            // Parse noteId from transaction receipt events
-            // For now, assume it's noteId 1 (or increment based on localStorage)
-            const currentNoteId = parseInt(localStorage.getItem('tsf_last_note_id') || '0') + 1;
-            localStorage.setItem('tsf_last_note_id', currentNoteId.toString());
-            localStorage.setItem(`tsf_note_${currentNoteId}_tx`, txResult.hash);
+            // Now get the latest noteId by querying getTotalNotes()
+            const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
+            const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
+
+            // Add a small delay to ensure blockchain state is updated
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const totalNotes = await listing.getTotalNotes();
+            const noteId = Number(totalNotes); // Latest note is the total count
+
+            console.log("Created noteId:", noteId);
+
+            localStorage.setItem('tsf_last_note_id', noteId.toString());
+            localStorage.setItem(`tsf_note_${noteId}_tx`, txResult.hash);
 
             setTxHash(txResult.hash);
             setStep('confirmed');
             onList(currentPrice);
+
+            // Navigate to the listing detail page after 2 seconds
+            setTimeout(() => {
+                navigate(`/investor/listing/${noteId}`);
+                onClose(); // Close modal before navigating  
+            }, 2000);
 
         } catch (error: any) {
             console.error("Create Note failed:", error);

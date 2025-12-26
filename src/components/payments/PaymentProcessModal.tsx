@@ -4,7 +4,7 @@ import { savePaymentEvent } from '../../services/paymentService';
 import type { PaymentEvent } from '../../types/payment';
 import { Shield, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
-import { callContractAsSPV } from '../../utils/blockchain';
+import { callContractAsSPV, submitCustodialTransaction } from '../../utils/blockchain';
 import ListingABI from '../../abis/Listing.json';
 import DemoUSD_ABI from '../../abis/DemoUSD.json';
 
@@ -36,15 +36,20 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
         setStep('processing');
         setErrorMsg('');
         try {
+            // Get noteId from localStorage (use throughout function)
+            const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
+            console.log('Processing payment for noteId:', noteId);
+
             // Check if funding is complete (100%)
             const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
             const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
 
-            const raised = await listing.raised();
-            const goal = await listing.goal();
+            const noteStatus = await listing.getNoteStatus(noteId);
+            const raised = noteStatus.raised;
+            const goal = noteStatus.goal;
             const isFundingComplete = Number(raised) >= Number(goal);
 
-            console.log(`Funding status: ${Number(raised)}/${Number(goal)} = ${isFundingComplete ? 'COMPLETE' : 'INCOMPLETE'}`);
+            console.log(`Funding status for noteId ${noteId}: ${Number(raised)}/${Number(goal)} = ${isFundingComplete ? 'COMPLETE' : 'INCOMPLETE'}`);
 
             if (!isFundingComplete) {
                 // BEFORE 100%: TSF → TSF anchoring only (데이터만 기록)
@@ -99,12 +104,12 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                 console.log("DemoUSD approved:", approveTxResult.hash);
 
                 // 2. Make payment to contract
-                console.log("Making payment to Listing contract...");
+                console.log("Making payment to Listing contract for noteId:", noteId);
                 const paymentTxResult = await callContractAsSPV(
                     LISTING_ADDRESS,
                     ListingABI,
                     'makePayment',
-                    [1, amountWei] // noteId = 1
+                    [noteId, amountWei]
                 );
 
                 console.log("Payment successful! TX:", paymentTxResult.hash);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Share, Heart, ExternalLink } from 'lucide-react';
 import Button from '../components/ui/Button';
 import heroImage from '../assets/listing_1.jpg';
@@ -31,7 +31,8 @@ const DetailCard: React.FC<{ label: string; value: string | React.ReactNode; sub
 
 const InvestorListingDetail: React.FC = () => {
     const navigate = useNavigate();
-    // const { id } = useParams(); // In a real app, fetch data based on ID
+    const { id } = useParams(); // Get noteId from URL
+    const noteId = parseInt(id || '1'); // Default to 1 if not found
 
     // Fixed Listing Data
     const listingBase = {
@@ -73,50 +74,40 @@ const InvestorListingDetail: React.FC = () => {
     const [investedAmount, setInvestedAmount] = React.useState(0);
     const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
-    // Load initial state mainly from Chain, fallback to local if needed or just chain
-    // Data: Fetch 'raised' from contract
+    // Mantle Sepolia Contract Address
+    const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+
     // Load initial state mainly from Chain, fallback to local if needed or just chain
     // Data: Fetch 'raised' from contract
     React.useEffect(() => {
         const fetchRaised = async () => {
             try {
-                // Priority 1: Use Localhost RPC directly (Robust for Demo)
-                let provider;
-                try {
-                    // Changing to Mantle Sepolia RPC as per user's screenshot context
-                    provider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
-                    await provider.getNetwork();
-                } catch (e) {
-                    if (window.ethereum) {
-                        provider = new ethers.BrowserProvider(window.ethereum);
+                const rpcProvider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
+                const listingPublic = new ethers.Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
+                const noteStatus = await listingPublic.getNoteStatus(noteId);
+                const raised = Number(noteStatus.raised) / 1_000_000; // Convert from 6 decimals
+                setInvestedAmount(raised);
+            } catch (e) {
+                console.error("Error fetching raised from RPC provider:", e);
+                // Fallback to browser provider if RPC fails
+                if (window.ethereum) {
+                    try {
+                        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+                        const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, browserProvider);
+                        const noteStatus = await listing.getNoteStatus(noteId);
+                        const raised = Number(noteStatus.raised) / 1_000_000;
+                        setInvestedAmount(raised);
+                    } catch (err) {
+                        console.error("Browser provider also failed:", err);
                     }
                 }
-
-                if (!provider) return;
-
-                // Mantle Sepolia Contract Addresses
-                const listingAddress = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
-                const demoUSDAddress = "0x2f514963a095533590E1FB98eedC637D3947d219";
-
-                // Fetch Balance of DemoUSD held by Listing Contract
-                // This represents the actual "money in the bank"
-                const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
-                const demoUSD = new ethers.Contract(demoUSDAddress, erc20Abi, provider);
-
-                const balanceWei = await demoUSD.balanceOf(listingAddress);
-                console.log("Listing Internal 'raised': (Skipped)");
-                console.log("Listing Actual DemoUSD Balance:", balanceWei.toString());
-
-                setInvestedAmount(Number(balanceWei) / 1_000_000); // 6 decimals
-            } catch (err) {
-                console.error("Error fetching raised amount:", err);
             }
         };
 
         fetchRaised();
         const interval = setInterval(fetchRaised, 3000);
         return () => clearInterval(interval);
-    }, [refreshTrigger]);
+    }, [refreshTrigger, noteId]);
 
     // Fetch Note Metadata from blockchain
     React.useEffect(() => {
@@ -126,17 +117,17 @@ const InvestorListingDetail: React.FC = () => {
                 const listingAddress = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
                 const listing = new ethers.Contract(listingAddress, ListingABI, provider);
 
-                // Call getNoteMetadata()
-                const metadata = await listing.getNoteMetadata();
+                // Call getNoteMetadata(noteId)
+                const metadata = await listing.getNoteMetadata(noteId);
 
-                // Convert bytes32 to hex string
+                // Convert bytes32 to hex string  
                 setNoteMetadata({
-                    contractHash: metadata[0],
-                    creditHash: metadata[1],
-                    anchorHash: metadata[2],
-                    paymentLedgerRoot: metadata[3],
-                    listingPrice: Number(metadata[4]),
-                    listedAt: Number(metadata[5]),
+                    contractHash: metadata[1],
+                    creditHash: metadata[2],
+                    anchorHash: metadata[3],
+                    paymentLedgerRoot: metadata[4],
+                    listingPrice: Number(metadata[5]) / 1_000_000,
+                    listedAt: Number(metadata[6]),
                     listingTxHash: '' // We don't have this from the contract, would need to fetch from events
                 });
             } catch (err) {
@@ -147,7 +138,9 @@ const InvestorListingDetail: React.FC = () => {
         fetchNoteMetadata();
     }, []);
 
-    const investedPercent = Math.min(100, Math.round((investedAmount / listingBase.price) * 100));
+    // Goal is $455,000 for all notes
+    const GOAL = 455000;
+    const investedPercent = Math.min(100, Math.round((investedAmount / GOAL) * 100));
 
     const handleInvest = (amount: number) => {
         // optimistically update or just trigger refresh
@@ -169,7 +162,13 @@ const InvestorListingDetail: React.FC = () => {
             <InvestModal
                 isOpen={isInvestModalOpen}
                 onClose={() => setIsInvestModalOpen(false)}
-                onInvest={handleInvest}
+                onInvest={(amount) => {
+                    console.log("Invested:", amount);
+                    setIsInvestModalOpen(false);
+                    // Trigger refresh
+                    setRefreshTrigger(prev => prev + 1);
+                }}
+                noteId={noteId}
             />
             <MerkleRecordModal
                 isOpen={isMerkleModalOpen}

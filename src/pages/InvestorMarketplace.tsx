@@ -1,22 +1,54 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/layout/TopBar';
+import { ethers } from 'ethers';
+import ListingABI from '../abis/Listing.json';
 import heroImage from '../assets/listing_1.jpg';
 import image2 from '../assets/listing_2.jpg';
 import image3 from '../assets/listing_3.jpg';
 
 const InvestorMarketplace: React.FC = () => {
     const navigate = useNavigate();
+    const [latestNoteId, setLatestNoteId] = React.useState<number>(1);
+    const [latestNoteFunded, setLatestNoteFunded] = React.useState<number>(0);
+
+    // Fetch latest note from blockchain
+    React.useEffect(() => {
+        const fetchLatestNote = async () => {
+            try {
+                const lastNoteId = localStorage.getItem('tsf_last_note_id');
+                if (!lastNoteId) return;
+
+                const noteId = parseInt(lastNoteId);
+                const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
+                const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+                const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
+
+                const noteStatus = await listing.getNoteStatus(noteId);
+                const raised = Number(noteStatus.raised) / 1_000_000;
+                const goal = Number(noteStatus.goal) / 1_000_000;
+                const fundedPercentage = Math.round((raised / goal) * 100);
+
+                setLatestNoteId(noteId);
+                setLatestNoteFunded(fundedPercentage);
+            } catch (error) {
+                console.error("Error fetching latest note:", error);
+            }
+        };
+
+        fetchLatestNote();
+    }, []);
+
 
     const listings = [
         {
-            id: 1,
+            id: latestNoteId,
             address: '5931 Abernathy Dr, Los Angeles, CA 90045',
             price: 450000,
             yield: 15.8,
             ltv: 44,
             available: 107000000, // using 107m representation
-            progress: 0,
+            progress: latestNoteFunded,
             daysLeft: 30,
             image: heroImage,
             tier: 'Tier A',
