@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ChevronLeft, HelpCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
 
 const SellerFinancingTerms: React.FC = () => {
     const navigate = useNavigate();
@@ -11,7 +11,7 @@ const SellerFinancingTerms: React.FC = () => {
     const photos = location.state?.photos || [];
 
     // Mock Zillestimate Data
-    const mockZestimate = 367200;
+    const mockZestimate = 1209800;
 
     // Form State
     const [price, setPrice] = useState<string>('');
@@ -46,7 +46,9 @@ const SellerFinancingTerms: React.FC = () => {
 
     // Logic for Guidance Messages
     const getPriceGuidance = () => {
-        if (!priceNum) return null;
+        if (!priceNum) {
+            return { type: 'info', text: `See "Estimated Value (Zillow)" on the right for market reference.` };
+        }
         if (priceNum > mockZestimate * 1.1) {
             return { type: 'warning', text: `Your price is >10% above the estimated value ($${mockZestimate.toLocaleString()}). High prices may increase sales time.` };
         }
@@ -54,7 +56,9 @@ const SellerFinancingTerms: React.FC = () => {
     };
 
     const getDownPaymentGuidance = () => {
-        if (!downPaymentPercent) return null;
+        if (!downPaymentPercent) {
+            return { type: 'info', text: 'See "Contract Categories" on the right for guidance.' };
+        }
         if (downPaymentNum < 10) return { type: 'warning', text: "Too low (<10%) increases default risk." };
         if (downPaymentNum > 30) return { type: 'warning', text: "Too high (>30%) may decrease the pool of eligible buyers." };
         return { type: 'success', text: "Standard down payment range." };
@@ -64,15 +68,42 @@ const SellerFinancingTerms: React.FC = () => {
         // High Down Payment -> Lower Rate (Safe)
         // Low Down Payment -> Higher Rate (Risk Premium)
         if (downPaymentNum >= 30) return "5.5% - 6.5%";
-        if (downPaymentNum >= 15) return "6.5% - 8.0%";
+        if (downPaymentNum >= 10) return "6.5% - 8.0%";
         return "8.0% - 10.0%";
     };
 
     const getRateGuidance = () => {
-        if (!interestRate) return null;
         const range = getRateGuidanceRange();
-        // Just showing the dynamic range advice
-        return { type: 'info', text: `Suggested range for this down payment: ${range}` };
+        if (!downPaymentPercent) {
+            return { type: 'info', text: 'Enter down payment first to see suggested interest rate range.' };
+        }
+
+        // Check if interest rate is entered and validate against range
+        if (rateNum > 0) {
+            let minRate = 0;
+            let maxRate = 0;
+
+            if (downPaymentNum >= 30) {
+                minRate = 5.5;
+                maxRate = 6.5;
+            } else if (downPaymentNum >= 10) {
+                minRate = 6.5;
+                maxRate = 8.0;
+            } else {
+                minRate = 8.0;
+                maxRate = 10.0;
+            }
+
+            if (rateNum < minRate) {
+                return { type: 'warning', text: `Rate is below market range (${range}) for ${downPaymentNum}% down payment.` };
+            } else if (rateNum > maxRate) {
+                return { type: 'warning', text: `Rate is above market range (${range}) for ${downPaymentNum}% down payment.` };
+            } else {
+                return { type: 'success', text: `Rate is within market range (${range}) for ${downPaymentNum}% down payment.` };
+            }
+        }
+
+        return { type: 'info', text: `Market range for ${downPaymentNum}% down payment: ${range}` };
     };
 
     // Risk Categorization Logic (Owner Perspective)
@@ -81,7 +112,7 @@ const SellerFinancingTerms: React.FC = () => {
     const getRiskCategory = () => {
         if (!downPaymentPercent || !price) return null;
         if (downPaymentNum >= 30) return 'Tier A';
-        if (downPaymentNum >= 15) return 'Tier B';
+        if (downPaymentNum >= 10) return 'Tier B';
         return 'Tier C';
     };
 
@@ -140,12 +171,16 @@ const SellerFinancingTerms: React.FC = () => {
                         <Input
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
-                            placeholder="e.g. 350,000"
+                            placeholder="e.g. 500,000"
                             style={{ margin: 0 }}
                         />
-                        {getPriceGuidance()?.type === 'warning' && (
-                            <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '6px', display: 'flex', gap: '4px' }}>
-                                <AlertCircle size={14} /> {getPriceGuidance()?.text}
+                        {getPriceGuidance() && (
+                            <div style={{
+                                fontSize: '12px',
+                                color: getPriceGuidance()?.type === 'warning' ? '#dc2626' : getPriceGuidance()?.type === 'success' ? '#059669' : '#6b7280',
+                                marginTop: '6px'
+                            }}>
+                                {getPriceGuidance()?.text}
                             </div>
                         )}
                     </div>
@@ -161,9 +196,13 @@ const SellerFinancingTerms: React.FC = () => {
                             placeholder="e.g. 10"
                             style={{ margin: 0 }}
                         />
-                        {getDownPaymentGuidance()?.type === 'warning' && (
-                            <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '6px', display: 'flex', gap: '4px' }}>
-                                <AlertCircle size={14} /> {getDownPaymentGuidance()?.text}
+                        {getDownPaymentGuidance() && (
+                            <div style={{
+                                fontSize: '12px',
+                                color: getDownPaymentGuidance()?.type === 'warning' ? '#dc2626' : getDownPaymentGuidance()?.type === 'success' ? '#059669' : '#6b7280',
+                                marginTop: '6px'
+                            }}>
+                                {getDownPaymentGuidance()?.text}
                             </div>
                         )}
                     </div>
@@ -179,9 +218,13 @@ const SellerFinancingTerms: React.FC = () => {
                             placeholder="e.g. 6.5"
                             style={{ margin: 0 }}
                         />
-                        {priceNum > 0 && downPaymentNum > 0 && (
-                            <div style={{ fontSize: '12px', color: '#059669', marginTop: '6px', display: 'flex', gap: '4px' }}>
-                                <TrendingUp size={14} /> {getRateGuidance()?.text}
+                        {getRateGuidance() && (
+                            <div style={{
+                                fontSize: '12px',
+                                color: getRateGuidance()?.type === 'warning' ? '#dc2626' : getRateGuidance()?.type === 'success' ? '#059669' : '#6b7280',
+                                marginTop: '6px'
+                            }}>
+                                {getRateGuidance()?.text}
                             </div>
                         )}
                     </div>
@@ -299,7 +342,7 @@ const SellerFinancingTerms: React.FC = () => {
                         <div style={{ marginBottom: '16px' }}>
                             <div style={{ color: '#b45309', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Tier B (Balanced)</div>
                             <ul style={{ fontSize: '13px', color: '#4b5563', paddingLeft: '20px', margin: 0, lineHeight: '1.6' }}>
-                                <li>Medium Down Payment (15-30%)</li>
+                                <li>Medium Down Payment (10-30%)</li>
                                 <li>Mid-term cash flow</li>
                                 <li>Standard Market Rates</li>
                             </ul>
@@ -308,7 +351,7 @@ const SellerFinancingTerms: React.FC = () => {
                         <div>
                             <div style={{ color: '#991b1b', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Tier C (Opportunistic)</div>
                             <ul style={{ fontSize: '13px', color: '#4b5563', paddingLeft: '20px', margin: 0, lineHeight: '1.6' }}>
-                                <li>Low Down Payment ({'<'}15%)</li>
+                                <li>Low Down Payment ({'<'}10%)</li>
                                 <li>Short-term cash flow strategy</li>
                                 <li>Highest potential return (Rate {'>'}8%)</li>
                             </ul>
