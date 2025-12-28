@@ -81,6 +81,13 @@ export const processPayment = async (
     const contractSnapshot = getContractSnapshot();
 
     // 2. Create New Event
+    const grossAmount = amount.total;
+    const platformFee = grossAmount * 0.01; // 1% fee
+    const netAmount = grossAmount - platformFee;
+
+    // Determine funding status (mock logic: first 2 payments are PRE_FUNDING, rest are POST_FUNDING)
+    const fundingStatus = currentEvents.length < 2 ? "PRE_FUNDING" : "POST_FUNDING";
+
     const newEvent: PaymentEvent = {
         schemaVersion: "payment_event_v1",
         contractId: contractSnapshot.contractId,
@@ -93,6 +100,9 @@ export const processPayment = async (
         receivedAt: new Date().toISOString(),
         amount,
         method: "PAY_NOW",
+        platformFee,
+        netAmount,
+        fundingStatus,
         eventId: crypto.randomUUID(), // deterministic identity for this record
         statusAfter: "PAID"
     };

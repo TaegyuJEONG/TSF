@@ -164,7 +164,8 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                     totalRepayment: summary.totalRepayment,
                     contractFee: summary.contractFee
                 },
-                generatedDocs: documents
+                generatedDocs: documents,
+                signedAt: new Date().toISOString() // Contract signing timestamp
             };
 
             // 2. Build Mock Credit Assessment

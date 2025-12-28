@@ -40,6 +40,11 @@ export interface PaymentEvent {
     amount: Money;
     method: PaymentMethod;
 
+    // Fee Structure
+    platformFee: number; // 1% of gross amount
+    netAmount: number;   // Gross - Fee
+    fundingStatus: "PRE_FUNDING" | "POST_FUNDING"; // Before/After 100% funding
+
     // Deterministic Identity
     eventId: string; // uuid or nonce
     statusAfter: PaymentStatus;

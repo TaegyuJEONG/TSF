@@ -337,7 +337,7 @@ const InvestorPayments: React.FC = () => {
 
                         {/* Hash Link */}
                         <div
-                            onClick={() => navigate('/merkle-record')}
+                            onClick={() => navigate('/investor/merkle-record')}
                             style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '16px', cursor: 'pointer' }}
                             title="View Merkle Record Details"
                         >

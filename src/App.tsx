@@ -68,6 +68,7 @@ function App() {
               <Route path="investor/invested" element={<InvestorDashboard />} />
               <Route path="investor/contract" element={<InvestorContract />} />
               <Route path="investor/payments" element={<InvestorPayments />} />
+              <Route path="investor/merkle-record" element={<MerkleRecord />} />
               <Route path="investor/asset" element={<InvestorNoteOverview />} />
 
               {/* Buyer Dashboard Routes */}
