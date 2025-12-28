@@ -174,8 +174,17 @@ contract Listing is ReentrancyGuard {
         // Transfer from buyer to this contract
         token.safeTransferFrom(msg.sender, address(this), amount);
 
-        // Update accumulator (same logic as depositYield)
-        accDivPerShare[noteId] += (amount * SCALE) / note.raised;
+        // Deduct 1% platform fee
+        uint256 platformFee = amount / 100; // 1% fee
+        uint256 investorAmount = amount - platformFee;
+
+        // Transfer platform fee to SPV
+        if (platformFee > 0) {
+            token.safeTransfer(spv, platformFee);
+        }
+
+        // Update accumulator with net amount (after fee) for investors
+        accDivPerShare[noteId] += (investorAmount * SCALE) / note.raised;
 
         emit PaymentReceived(noteId, msg.sender, amount, accDivPerShare[noteId]);
     }

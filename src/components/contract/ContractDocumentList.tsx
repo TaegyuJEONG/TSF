@@ -9,7 +9,7 @@ import { Download, ExternalLink, Copy, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
 import ListingABI from '../../abis/Listing.json';
 
-const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 
 interface DocumentItemProps {
     title: string;
@@ -368,6 +368,13 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                     <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(summary.contractFee)}
                     </span>
+                </div>
+
+                {/* Platform Servicing Fee Disclosure */}
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                    <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: '1.5' }}>
+                        <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Platform Servicing Fee:</span> 1% of monthly P&I deducted for administration and asset servicing
+                    </div>
                 </div>
             </div>
 

@@ -67,6 +67,8 @@ const TopBar: React.FC = () => {
         };
     }, []);
 
+    const isInvestorRoute = location.pathname.includes('investor');
+
     return (
         <div style={{
             height: '70px',
@@ -74,15 +76,15 @@ const TopBar: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid #e5e7eb',
-            backgroundColor: '#fff',
+            borderBottom: `1px solid ${isInvestorRoute ? '#334155' : '#e5e7eb'}`,
+            backgroundColor: isInvestorRoute ? '#1e293b' : '#fff',
             position: 'sticky',
             top: 0,
             zIndex: 100
         }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
                 <div
-                    style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', cursor: 'pointer' }}
+                    style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', cursor: 'pointer', color: isInvestorRoute ? '#f1f5f9' : '#111827' }}
                     onClick={() => navigate('/')}
                 >
                     TSF
@@ -90,7 +92,7 @@ const TopBar: React.FC = () => {
                 <div style={{ display: 'flex', gap: '24px', fontSize: '14px', fontWeight: 500 }}>
                     {!location.pathname.includes('investor') && (
                         <span
-                            style={{ cursor: 'pointer', color: '#6b7280' }}
+                            style={{ cursor: 'pointer', color: isInvestorRoute ? '#94a3b8' : '#6b7280' }}
                             onClick={() => navigate('/owner-onboarding')}
                         >
                             Sell My Home
@@ -99,7 +101,7 @@ const TopBar: React.FC = () => {
                     <span
                         style={{
                             cursor: 'pointer',
-                            color: isActive('/dashboard') ? '#111827' : '#6b7280',
+                            color: isActive('/dashboard') ? (isInvestorRoute ? '#f1f5f9' : '#111827') : (isInvestorRoute ? '#94a3b8' : '#6b7280'),
                             fontWeight: isActive('/dashboard') ? 600 : 500
                         }}
                         onClick={() => {
@@ -119,7 +121,7 @@ const TopBar: React.FC = () => {
                     <span
                         style={{
                             cursor: 'pointer',
-                            color: isActive('/marketplace') ? '#111827' : '#6b7280',
+                            color: isActive('/marketplace') ? (isInvestorRoute ? '#f1f5f9' : '#111827') : (isInvestorRoute ? '#94a3b8' : '#6b7280'),
                             fontWeight: isActive('/marketplace') ? 600 : 500
                         }}
                         onClick={() => {
@@ -136,7 +138,7 @@ const TopBar: React.FC = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <Button
-                    style={{ height: '36px', fontSize: '14px', backgroundColor: '#1e1b4b', padding: '0 20px' }}
+                    style={{ height: '36px', fontSize: '14px', backgroundColor: isInvestorRoute ? '#7c3aed' : '#1e1b4b', padding: '0 20px' }}
                     onClick={() => {
                         if (location.pathname.includes('investor')) {
                             navigate('/listed-home');
@@ -147,21 +149,21 @@ const TopBar: React.FC = () => {
                 >
                     {location.pathname.includes('investor') ? 'For Home Owner/Buyer →' : 'For Investment →'}
                 </Button>
-                <Bell size={20} color="#374151" />
+                <Bell size={20} color={isInvestorRoute ? '#cbd5e1' : '#374151'} />
                 <div style={{ position: 'relative' }} ref={dropdownRef}>
                     <div
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
                         onClick={handleProfileClick}
                     >
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: isInvestorRoute ? '#e2e8f0' : '#374151' }}>
                             {currentProfile.name}
                         </span>
                         {location.pathname.includes('investor') ? (
                             <div style={{
                                 width: '32px', height: '32px', borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%)', // Dark Indigo (Trust/Asset)
+                                background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                border: '2px solid white', boxShadow: '0 0 0 1px #e5e7eb'
+                                border: `2px solid ${isInvestorRoute ? '#1e293b' : 'white'}`, boxShadow: '0 0 0 1px #475569'
                             }}>
                                 <Building2 size={16} color="#e0e7ff" />
                             </div>
@@ -181,16 +183,16 @@ const TopBar: React.FC = () => {
                             top: '120%',
                             right: 0,
                             width: '240px',
-                            backgroundColor: '#fff',
+                            backgroundColor: isInvestorRoute ? '#1e293b' : '#fff',
                             borderRadius: '8px',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            border: '1px solid #e5e7eb',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            border: `1px solid ${isInvestorRoute ? '#334155' : '#e5e7eb'}`,
                             padding: '8px',
                             zIndex: 1000
                         }}>
                             {location.pathname.includes('investor') ? (
                                 <>
-                                    <div style={{ padding: '8px 12px', fontSize: '13px', color: '#6b7280', borderBottom: '1px solid #f3f4f6', marginBottom: '4px' }}>
+                                    <div style={{ padding: '8px 12px', fontSize: '13px', color: isInvestorRoute ? '#94a3b8' : '#6b7280', borderBottom: `1px solid ${isInvestorRoute ? '#334155' : '#f3f4f6'}`, marginBottom: '4px' }}>
                                         Wallet Settings
                                     </div>
                                     <div
@@ -206,7 +208,7 @@ const TopBar: React.FC = () => {
                                             gap: '8px',
                                             transition: 'background-color 0.2s'
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isInvestorRoute ? '#334155' : '#fef2f2'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                     >
                                         <LogOut size={16} />

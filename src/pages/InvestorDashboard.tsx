@@ -28,7 +28,7 @@ const InvestorDashboard: React.FC = () => {
     };
 
     return (
-        <div className="container" style={{ padding: '32px 0' }}>
+        <div className="container" style={{ padding: '32px 0', backgroundColor: '#0f172a', minHeight: '100vh' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '32px' }}>
 
                 {/* Left Column: Marketplace Preview */}

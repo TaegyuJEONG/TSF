@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bookmark } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 interface MarketplaceCardProps {
     image: string;
@@ -43,6 +44,9 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
     variant = 'homeowner',
     investorProps
 }) => {
+    const location = useLocation();
+    const isDark = location.pathname.startsWith('/investor');
+
     const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
     const getTierStyle = (tierVal: string) => {
@@ -55,7 +59,12 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
     };
 
     return (
-        <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}>
+        <div style={{
+            border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
+            borderRadius: '12px',
+            overflow: 'hidden',
+            backgroundColor: isDark ? '#1e293b' : 'white'
+        }}>
             {/* Image Section */}
             <div style={{ height: '220px', backgroundColor: '#f3f4f6', position: 'relative' }}>
                 <img src={image} alt={address} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -111,9 +120,9 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                <span style={{ fontSize: '20px', fontWeight: 700 }}>{formatCurrency(price)}</span>
+                                <span style={{ fontSize: '20px', fontWeight: 700, color: isDark ? '#f1f5f9' : '#111827' }}>{formatCurrency(price)}</span>
                                 {showPricePerSqft && (
-                                    <span style={{ fontSize: '13px', color: '#6b7280' }}>(${(price / sqft).toFixed(0)}/sqft)</span>
+                                    <span style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#6b7280' }}>(${(price / sqft).toFixed(0)}/sqft)</span>
                                 )}
                             </div>
                             {negotiable && (
@@ -123,15 +132,15 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
                             )}
                         </div>
 
-                        <div style={{ fontSize: '13px', color: '#374151', marginBottom: '12px', lineHeight: '1.6' }}>
+                        <div style={{ fontSize: '13px', color: isDark ? '#cbd5e1' : '#374151', marginBottom: '12px', lineHeight: '1.6' }}>
                             DP {formatCurrency(specs.dp).replace('.00', '')} | Term {specs.term}y | Interest {specs.interest}%
                         </div>
 
-                        <div style={{ fontSize: '13px', color: '#4b5563', marginBottom: '12px' }}>
+                        <div style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#4b5563', marginBottom: '12px' }}>
                             {specs.beds} bds | {specs.baths} ba | {sqft} sqft
                         </div>
 
-                        <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                        <div style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#6b7280' }}>
                             {address}
                         </div>
                     </>
@@ -139,7 +148,7 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
                     // Investor Variant
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>
+                            <div style={{ fontSize: '20px', fontWeight: 700, color: isDark ? '#f1f5f9' : '#111827' }}>
                                 {formatCurrency(price)}
                             </div>
                             {investorProps?.badge && (
@@ -153,34 +162,34 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
                         </div>
 
                         {/* Progress Bar */}
-                        <div style={{ position: 'relative', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
+                        <div style={{ position: 'relative', height: '8px', backgroundColor: isDark ? '#334155' : '#f3f4f6', borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
                             <div style={{
                                 position: 'absolute', left: 0, top: 0, bottom: 0,
                                 width: `${investorProps?.progress || 0}%`,
-                                backgroundColor: '#1e1b4b',
+                                backgroundColor: '#7c3aed',
                                 borderRadius: '4px'
                             }} />
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-start', fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '16px', marginTop: '-12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', fontSize: '13px', fontWeight: 600, color: isDark ? '#e2e8f0' : '#111827', marginBottom: '16px', marginTop: '-12px' }}>
                             <span>Funded {investorProps?.progress || 0}%</span>
                         </div>
 
                         {/* Stats Grid */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                            <div style={{ backgroundColor: '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Monthly Payment</div>
-                                <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1b4b' }}>{formatCurrency(investorProps?.monthlyPayment || 0).replace('.00', '')}</div>
+                            <div style={{ backgroundColor: isDark ? '#334155' : '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#6b7280', marginBottom: '4px' }}>Monthly Payment</div>
+                                <div style={{ fontSize: '16px', fontWeight: 800, color: isDark ? '#e2e8f0' : '#1e1b4b' }}>{formatCurrency(investorProps?.monthlyPayment || 0).replace('.00', '')}</div>
                             </div>
-                            <div style={{ backgroundColor: '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Remaining Term</div>
-                                <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1b4b' }}>{investorProps?.remainingTerm}m</div>
+                            <div style={{ backgroundColor: isDark ? '#334155' : '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#6b7280', marginBottom: '4px' }}>Remaining Term</div>
+                                <div style={{ fontSize: '16px', fontWeight: 800, color: isDark ? '#e2e8f0' : '#1e1b4b' }}>{investorProps?.remainingTerm}m</div>
                             </div>
-                            <div style={{ backgroundColor: '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>LTV</div>
-                                <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1b4b' }}>{investorProps?.ltv}%</div>
+                            <div style={{ backgroundColor: isDark ? '#334155' : '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#6b7280', marginBottom: '4px' }}>LTV</div>
+                                <div style={{ fontSize: '16px', fontWeight: 800, color: isDark ? '#e2e8f0' : '#1e1b4b' }}>{investorProps?.ltv}%</div>
                             </div>
                         </div>
-                        <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '16px' }}>
+                        <div style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#6b7280', marginTop: '16px' }}>
                             {address}
                         </div>
                     </>

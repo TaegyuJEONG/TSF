@@ -21,7 +21,7 @@ const InvestorMarketplace: React.FC = () => {
 
                 const noteId = parseInt(lastNoteId);
                 const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
-                const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+                const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
                 const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
 
                 const noteStatus = await listing.getNoteStatus(noteId);
@@ -83,16 +83,16 @@ const InvestorMarketplace: React.FC = () => {
     const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
             <TopBar />
 
             {/* Filter Bar */}
-            <div style={{ padding: '20px 40px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '20px 40px', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1e293b' }}>
                 <div style={{ display: 'flex', gap: '12px' }}>
                     {['Loan Metrics', 'Property Information', 'Contract Structure'].map((filter) => (
                         <div key={filter} style={{
-                            border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px 16px',
-                            fontSize: '14px', color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: '100px'
+                            border: '1px solid #475569', borderRadius: '8px', padding: '8px 16px',
+                            fontSize: '14px', color: '#cbd5e1', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: '100px'
                         }}>
                             {filter}
                         </div>
@@ -105,11 +105,11 @@ const InvestorMarketplace: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '32px' }}>
                     {listings.map(listing => (
                         <div key={listing.id} style={{
-                            border: '1px solid #e5e7eb',
+                            border: '1px solid #334155',
                             borderRadius: '12px',
                             overflow: 'hidden',
                             cursor: 'pointer',
-                            backgroundColor: '#fff',
+                            backgroundColor: '#1e293b',
                             transition: 'transform 0.2s'
                         }}
                             onClick={() => navigate(`/investor/listing/${listing.id}`)}
@@ -150,7 +150,7 @@ const InvestorMarketplace: React.FC = () => {
                             {/* Details */}
                             <div style={{ padding: '20px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>
+                                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#f1f5f9' }}>
                                         {formatCurrency(listing.price)}
                                     </div>
                                     <span style={{
@@ -162,34 +162,34 @@ const InvestorMarketplace: React.FC = () => {
                                 </div>
 
                                 {/* Progress Bar */}
-                                <div style={{ position: 'relative', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
+                                <div style={{ position: 'relative', height: '8px', backgroundColor: '#334155', borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
                                     <div style={{
                                         position: 'absolute', left: 0, top: 0, bottom: 0,
                                         width: `${listing.progress}%`,
-                                        backgroundColor: '#1e1b4b', // Indigo fill
+                                        backgroundColor: '#7c3aed', // Purple accent
                                         borderRadius: '4px'
                                     }} />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'flex-start', fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '16px', marginTop: '-12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-start', fontSize: '13px', fontWeight: 600, color: '#e2e8f0', marginBottom: '16px', marginTop: '-12px' }}>
                                     <span>Funded {listing.progress}%</span>
                                 </div>
 
                                 {/* Stats Grid */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                                    <div style={{ backgroundColor: '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Monthly Payment</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#1e1b4b' }}>$6,000</div>
+                                    <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Monthly Payment</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>$6,000</div>
                                     </div>
-                                    <div style={{ backgroundColor: '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Remaining Term</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#1e1b4b' }}>107m</div>
+                                    <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Remaining Term</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>107m</div>
                                     </div>
-                                    <div style={{ backgroundColor: '#f9fafb', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>LTV</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#1e1b4b' }}>{listing.ltv}%</div>
+                                    <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>LTV</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>{listing.ltv}%</div>
                                     </div>
                                 </div>
-                                <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '16px' }}>
+                                <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '16px' }}>
                                     {listing.address}
                                 </div>
                             </div>

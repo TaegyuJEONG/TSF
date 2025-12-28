@@ -16,7 +16,7 @@ interface PaymentProcessModalProps {
     onPaymentSuccess: (event: PaymentEvent) => void;
 }
 
-const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
 const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({

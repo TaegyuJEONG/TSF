@@ -15,7 +15,7 @@ interface NoteValuationModalProps {
     upb: number; // Unpaid Principal Balance
 }
 
-const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 
 const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList }) => {
     const navigate = useNavigate();
@@ -322,8 +322,8 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                     {step === 'processing' && (
                         <div style={{ padding: '64px 32px', textAlign: 'center' }}>
                             <div className="spinner" style={{ width: '40px', height: '40px', border: '3px solid #f3f4f6', borderTop: '3px solid black', borderRadius: '50%', margin: '0 auto 24px', animation: 'spin 1s linear infinite' }}></div>
-                            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>Preparing note for investor marketplace...</h3>
-                            <p style={{ fontSize: '14px', color: '#6b7280' }}>Creating SPV structure and tokenizing assets</p>
+                            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>Registering note on blockchain...</h3>
+                            <p style={{ fontSize: '14px', color: '#6b7280' }}>Publishing investment opportunity to marketplace</p>
                             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                         </div>
                     )}

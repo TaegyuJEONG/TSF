@@ -20,7 +20,7 @@ interface InvestModalProps {
 }
 
 // Mantle Sepolia Contract Addresses
-const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
@@ -347,6 +347,11 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
                                         <span style={{ fontSize: '14px', color: '#64748b' }}>Expected Monthly P&I</span>
                                         <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>{formatCurrency(monthlyPI)} / mo</span>
                                     </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', paddingLeft: '12px' }}>
+                                        <span style={{ fontSize: '13px', color: '#94a3b8' }}>Platform Service Fee (1%)</span>
+                                        <span style={{ fontSize: '13px', color: '#94a3b8' }}>-{formatCurrency(servicingFee)} / mo</span>
+                                    </div>
+                                    <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '12px 0' }} />
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>Net Monthly Cash Flow</span>
                                         <span style={{ fontSize: '18px', fontWeight: 700, color: '#166534' }}>{formatCurrency(netCashFlow)} / mo</span>

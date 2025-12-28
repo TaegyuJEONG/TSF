@@ -67,7 +67,8 @@ const Payments: React.FC = () => {
             status,
             receivedOn,
             isOverdue,
-            total: item.principal + item.interest
+            total: item.principal + item.interest,
+            netAmount: (item.principal + item.interest) * 0.99 // 1% platform fee deducted
         };
     });
 
@@ -182,6 +183,7 @@ const Payments: React.FC = () => {
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Principal</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Interest</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total</th>
+                                        <th style={{ padding: '12px 8px', fontWeight: 500 }}>Net Amount (After Fee)</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Received on</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Status</th>
                                     </tr>
@@ -194,6 +196,7 @@ const Payments: React.FC = () => {
                                                 <td style={{ padding: '12px 8px', color: '#111827' }}>${p.principal}</td>
                                                 <td style={{ padding: '12px 8px', color: '#111827' }}>${p.interest}</td>
                                                 <td style={{ padding: '12px 8px', fontWeight: 500, color: '#111827' }}>${p.total}</td>
+                                                <td style={{ padding: '12px 8px', fontWeight: 600, color: '#10b981' }}>${p.netAmount.toFixed(2)}</td>
                                                 <td style={{ padding: '12px 8px', color: '#6b7280' }}>{p.receivedOn}</td>
                                                 <td style={{ padding: '12px 8px' }}>
                                                     {p.status === 'Paid' && (

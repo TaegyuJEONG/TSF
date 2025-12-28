@@ -26,7 +26,7 @@ async function main() {
         demoUsdAddress,  // token
         spvAddress       // spv (removed goal - now per-note)
     );
-    listing.waitForDeployment();
+    await listing.waitForDeployment();
     const address = await listing.getAddress();
 
     console.log("Listing deployed to:", address);

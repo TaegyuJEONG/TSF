@@ -7,7 +7,7 @@ import { useWallet } from '../hooks/useWallet';
 import { BrowserProvider, Contract, ethers } from 'ethers';
 import ListingABI from '../abis/Listing.json';
 
-const LISTING_ADDRESS = "0x376EDcdbc2Ef192d74937BF61C0E0CB8c20c95b0";
+const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 
 interface PaymentEvent {
     receivedAt: string;
@@ -56,9 +56,6 @@ const InvestorPayments: React.FC = () => {
 
                 const share = (Number(investedAmount) * 100) / Number(noteStatus.raised);
 
-                // Get investor's current reward debt to determine what's been claimed
-                const rewardDebt = await listing.rewardDebt(noteId, address);
-
                 // Get all PaymentReceived events (limit to recent blocks to avoid RPC limit)
                 const currentBlock = await provider.getBlockNumber();
                 const fromBlock = Math.max(0, currentBlock - 5000); // Last ~5k blocks (reduced from 10k)
@@ -68,7 +65,6 @@ const InvestorPayments: React.FC = () => {
 
                 console.log(`Found ${paymentEvents.length} PaymentReceived events`);
 
-                // Process each payment
                 const processedEvents: PaymentEvent[] = [];
                 for (const event of paymentEvents) {
                     try {
@@ -78,23 +74,16 @@ const InvestorPayments: React.FC = () => {
                             const depositAmount = Number(event.args[2]) / 1_000_000; // 6 decimals
                             const investorShare = (depositAmount * share) / 100;
 
-                            // Determine if this deposit has been claimed
-                            const accDivPerShare = event.args[3]; // newAccDivPerShare
-                            const earnedUpToThis = (Number(investedAmount) * Number(accDivPerShare)) / 1e18;
-                            // If rewardDebt >= earnedUpToThis, it means this payment was already claimed
-                            const claimed = Number(rewardDebt) >= earnedUpToThis;
-
-                            console.log(`Payment event: earnedUpToThis=${earnedUpToThis}, rewardDebt=${Number(rewardDebt)}, claimed=${claimed}`);
-
                             // Use block number as timestamp approximation (or current time)
                             const timestamp = new Date().toISOString();
 
+                            // We'll determine claimed status after we know the current claimable amount
                             processedEvents.push({
                                 receivedAt: timestamp,
                                 depositAmount: depositAmount,
                                 yourShare: investorShare,
                                 share: share,
-                                status: (claimed ? 'Claimed' : 'Pending') as 'Pending' | 'Claimed',
+                                status: 'Pending', // Will be updated below
                                 txHash: event.transactionHash
                             });
                         } else {
@@ -105,7 +94,19 @@ const InvestorPayments: React.FC = () => {
                     }
                 }
 
-                console.log(`Processed ${processedEvents.length} events`);
+                // Get current claimable amount to determine status
+                const amountWei = await listing.claimable(noteId, address);
+                const currentClaimable = Number(amountWei) / 1_000_000;
+
+                // If claimable is 0 or very small, mark all as claimed
+                // Otherwise, mark all as pending (simple approach for now)
+                const allClaimed = currentClaimable < 0.01;
+
+                processedEvents.forEach(evt => {
+                    evt.status = allClaimed ? 'Claimed' : 'Pending';
+                });
+
+                console.log(`Processed ${processedEvents.length} events, all claimed: ${allClaimed}`);
                 setEvents(processedEvents);
             } catch (err) {
                 console.error("Error fetching yield events:", err);
@@ -177,7 +178,7 @@ const InvestorPayments: React.FC = () => {
     };
 
     return (
-        <div className="container" style={{ padding: '32px 0' }}>
+        <div className="container" style={{ padding: '32px 0', backgroundColor: '#0f172a', minHeight: '100vh' }}>
 
             <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '32px' }}>
 
@@ -198,16 +199,16 @@ const InvestorPayments: React.FC = () => {
 
                     {/* Contract Linkage / Status */}
                     <div style={{
-                        backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '20px',
+                        backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155', padding: '20px',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                             <Shield size={18} color="#4f46e5" />
-                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>Smart Contract Status</h3>
+                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f1f5f9' }}>Smart Contract Status</h3>
                         </div>
                         <div>
-                            <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Listing Contract</div>
-                            <code style={{ fontSize: '11px', color: '#374151', backgroundColor: '#f9fafb', padding: '4px', borderRadius: '4px', display: 'block', wordBreak: 'break-all' }}>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Listing Contract</div>
+                            <code style={{ fontSize: '11px', color: '#cbd5e1', backgroundColor: '#334155', padding: '4px', borderRadius: '4px', display: 'block', wordBreak: 'break-all' }}>
                                 {LISTING_ADDRESS}
                             </code>
                             <div style={{ marginTop: '12px' }}>
@@ -258,19 +259,20 @@ const InvestorPayments: React.FC = () => {
 
                     {/* Claim History Table */}
                     <div style={{
-                        border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', backgroundColor: 'white',
+                        border: '1px solid #334155', borderRadius: '12px', padding: '24px', backgroundColor: '#1e293b',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                     }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>Claim History</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f1f5f9', marginBottom: '24px' }}>Claim History</h2>
 
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid #e5e7eb', color: '#374151', textAlign: 'left' }}>
+                                    <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8', textAlign: 'left' }}>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Due Date</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Principal</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Interest</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total</th>
+                                        <th style={{ padding: '12px 8px', fontWeight: 500 }}>Net Amount (After Fee)</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Your Share</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Received on</th>
                                         <th style={{ padding: '12px 8px', fontWeight: 500 }}>Status</th>
@@ -279,7 +281,7 @@ const InvestorPayments: React.FC = () => {
                                 <tbody>
                                     {events.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#9ca3af' }}>
+                                            <td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
                                                 No claims yet. Available yield will appear above when SPV deposits.
                                             </td>
                                         </tr>
@@ -292,23 +294,27 @@ const InvestorPayments: React.FC = () => {
                                             const principal = evt.yourShare * 0.7;
                                             const interest = evt.yourShare * 0.3;
                                             const total = evt.yourShare;
+                                            const netAmount = total * 0.99; // 1% platform fee deducted
 
                                             return (
-                                                <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                                    <td style={{ padding: '12px 8px', color: '#111827' }}>{formattedDate}</td>
-                                                    <td style={{ padding: '12px 8px', fontWeight: 500, color: '#111827' }}>
+                                                <tr key={i} style={{ borderBottom: '1px solid #334155' }}>
+                                                    <td style={{ padding: '12px 8px', color: '#f1f5f9' }}>{formattedDate}</td>
+                                                    <td style={{ padding: '12px 8px', fontWeight: 500, color: '#f1f5f9' }}>
                                                         {formatCurrency(principal)}
                                                     </td>
-                                                    <td style={{ padding: '12px 8px', fontWeight: 500, color: '#111827' }}>
+                                                    <td style={{ padding: '12px 8px', fontWeight: 500, color: '#f1f5f9' }}>
                                                         {formatCurrency(interest)}
                                                     </td>
-                                                    <td style={{ padding: '12px 8px', fontWeight: 600, color: '#111827' }}>
+                                                    <td style={{ padding: '12px 8px', fontWeight: 600, color: '#f1f5f9' }}>
                                                         {formatCurrency(total)}
                                                     </td>
-                                                    <td style={{ padding: '12px 8px', color: '#6b7280' }}>
+                                                    <td style={{ padding: '12px 8px', fontWeight: 600, color: '#10b981' }}>
+                                                        {formatCurrency(netAmount)}
+                                                    </td>
+                                                    <td style={{ padding: '12px 8px', color: '#94a3b8' }}>
                                                         {evt.share ? `${evt.share.toFixed(2)}%` : '-'}
                                                     </td>
-                                                    <td style={{ padding: '12px 8px', color: '#111827' }}>
+                                                    <td style={{ padding: '12px 8px', color: '#f1f5f9' }}>
                                                         {formattedDate}
                                                     </td>
                                                     <td style={{ padding: '12px 8px' }}>
@@ -335,15 +341,15 @@ const InvestorPayments: React.FC = () => {
                             style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '16px', cursor: 'pointer' }}
                             title="View Merkle Record Details"
                         >
-                            <span style={{ fontSize: '14px', color: '#374151' }}>Verify Ledger</span>
+                            <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Verify Ledger</span>
                             <div style={{
-                                width: '24px', height: '24px', backgroundColor: '#111827', borderRadius: '50%',
+                                width: '24px', height: '24px', backgroundColor: '#f1f5f9', borderRadius: '50%',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M2 17L12 22L22 17" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M2 12L12 17L22 12" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </div>
                         </div>

@@ -7,8 +7,8 @@ import NoteValuationModal from '../components/dashboard/NoteValuationModal';
 // Reusable Stat Card Component
 const StatCard: React.FC<{ label: string; value: string; subValue?: string }> = ({ label, value, subValue }) => (
     <div style={{
-        backgroundColor: 'white',
-        border: '1px solid #e5e7eb',
+        backgroundColor: '#1e293b',
+        border: '1px solid #334155',
         borderRadius: '8px',
         padding: '16px',
         display: 'flex',
@@ -18,9 +18,9 @@ const StatCard: React.FC<{ label: string; value: string; subValue?: string }> = 
         textAlign: 'center',
         height: '100px' // Fixed height for consistency
     }}>
-        <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px', lineHeight: '1.2' }}>{label}</div>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>{value}</div>
-        {subValue && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{subValue}</div>}
+        <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', lineHeight: '1.2' }}>{label}</div>
+        <div style={{ fontSize: '20px', fontWeight: 700, color: '#f1f5f9' }}>{value}</div>
+        {subValue && <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>{subValue}</div>}
     </div>
 );
 
@@ -54,7 +54,7 @@ const InvestorNoteOverview: React.FC = () => {
     };
 
     return (
-        <div className="container" style={{ padding: '32px 0' }}>
+        <div className="container" style={{ padding: '32px 0', backgroundColor: '#0f172a', minHeight: '100vh' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '32px', alignItems: 'start' }}>
 
                 {/* Left Column: Marketplace Card */}
@@ -97,10 +97,10 @@ const InvestorNoteOverview: React.FC = () => {
 
                 {/* Right Column: Dashboard Stats */}
                 <div style={{
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid #334155',
                     borderRadius: '12px',
                     padding: '32px',
-                    backgroundColor: 'white',
+                    backgroundColor: '#1e293b',
                     position: 'relative',
                     overflow: 'hidden' // For overlay
                 }}>
@@ -131,7 +131,7 @@ const InvestorNoteOverview: React.FC = () => {
 
                     {/* Section 1: Cash Flow Summary */}
                     <div style={{ marginBottom: '32px' }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Cash Flow Summary</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f1f5f9', marginBottom: '16px' }}>Cash Flow Summary</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                             <StatCard label="Total Repayment Amount" value="$1 056 000" />
                             <StatCard label="Total Paid P&I" value="$414 000" />
@@ -142,7 +142,7 @@ const InvestorNoteOverview: React.FC = () => {
 
                     {/* Section 2: Note Value Summary */}
                     <div style={{ marginBottom: '32px' }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Note Value Summary</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f1f5f9', marginBottom: '16px' }}>Note Value Summary</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                             <StatCard label="Property Value" value="$1.19M" />
                             <StatCard label="LTV" value="44%" />
@@ -153,7 +153,7 @@ const InvestorNoteOverview: React.FC = () => {
 
                     {/* Section 3: Buyer Summary */}
                     <div style={{ marginBottom: '32px' }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Buyer Summary</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f1f5f9', marginBottom: '16px' }}>Buyer Summary</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                             <StatCard label="Credit Score Band:" value="680-720" />
                             <StatCard label="Payment consistency" value="23/24 on-time" />
