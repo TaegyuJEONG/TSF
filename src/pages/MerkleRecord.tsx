@@ -28,6 +28,9 @@ const MerkleRecord: React.FC = () => {
         raised: number;
     } | null>(null);
 
+    // Claim transaction data (for Your Position tab)
+    const [claimTransactions, setClaimTransactions] = useState<{ [eventIndex: number]: string }>({});
+
     useEffect(() => {
         setContractSnapshot(getContractSnapshot());
         getAuditPackageData().then(setPaymentAuditData);
@@ -55,6 +58,24 @@ const MerkleRecord: React.FC = () => {
                 const raised = Number(ethers.formatUnits(noteStatus.raised, 6));
                 const ownership = raised > 0 ? (totalInvested / raised) * 100 : 0;
                 const claimable = Number(ethers.formatUnits(claimableAmount, 6));
+
+                // Fetch Claimed events to get claim transaction hashes
+                const currentBlock = await provider.getBlockNumber();
+                const fromBlock = Math.max(0, currentBlock - 5000);
+                const claimFilter = listing.filters.Claimed(Number(noteId), address);
+                const claimEvents = await listing.queryFilter(claimFilter, fromBlock, currentBlock);
+
+                console.log(`Found ${claimEvents.length} Claimed events for investor`);
+
+                // Build map of claim transactions
+                const claimTxMap: { [eventIndex: number]: string } = {};
+                for (let i = 0; i < claimEvents.length; i++) {
+                    const claimEvent = claimEvents[i];
+                    if ('args' in claimEvent && claimEvent.args) {
+                        claimTxMap[i] = claimEvent.transactionHash;
+                    }
+                }
+                setClaimTransactions(claimTxMap);
 
                 // Calculate total claimed from payment history (will be computed after paymentAuditData loads)
                 setInvestorData({
@@ -593,7 +614,7 @@ const MerkleRecord: React.FC = () => {
                                                                 </div>
                                                                 {event.anchoredTxHash && (
                                                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                                        <span style={{ fontWeight: 600, color: colors.text }}>Anchored in Tx:</span>
+                                                                        <span style={{ fontWeight: 600, color: colors.text }}>Deposit Tx:</span>
                                                                         <a
                                                                             href={`https://explorer.sepolia.mantle.xyz/tx/${event.anchoredTxHash}`}
                                                                             target="_blank"
@@ -601,6 +622,19 @@ const MerkleRecord: React.FC = () => {
                                                                             style={{ color: colors.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'monospace', fontSize: '11px' }}
                                                                         >
                                                                             {event.anchoredTxHash.slice(0, 10)}... <ExternalLink size={10} />
+                                                                        </a>
+                                                                    </div>
+                                                                )}
+                                                                {claimTransactions[i] && (
+                                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                        <span style={{ fontWeight: 600, color: colors.text }}>Claim Tx:</span>
+                                                                        <a
+                                                                            href={`https://explorer.sepolia.mantle.xyz/tx/${claimTransactions[i]}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            style={{ color: colors.green, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'monospace', fontSize: '11px' }}
+                                                                        >
+                                                                            {claimTransactions[i].slice(0, 10)}... <ExternalLink size={10} />
                                                                         </a>
                                                                     </div>
                                                                 )}

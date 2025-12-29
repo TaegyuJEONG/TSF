@@ -15,7 +15,8 @@ interface PaymentEvent {
     yourShare: number;
     share: number;
     status: 'Pending' | 'Claimed';
-    txHash: string;
+    depositTxHash: string; // SPV deposit transaction
+    claimTxHash?: string;  // Investor claim transaction (if claimed)
 }
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
@@ -32,7 +33,7 @@ const InvestorPayments: React.FC = () => {
     // Refresh Trigger
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // 1. Fetch YieldDeposited Events from Blockchain
+    // 1. Fetch PaymentReceived and Claimed Events from Blockchain
     useEffect(() => {
         const fetchYieldEvents = async () => {
             if (!address) return;
@@ -58,15 +59,30 @@ const InvestorPayments: React.FC = () => {
 
                 // Get all PaymentReceived events (limit to recent blocks to avoid RPC limit)
                 const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 5000); // Last ~5k blocks (reduced from 10k)
+                const fromBlock = Math.max(0, currentBlock - 5000); // Last ~5k blocks
 
-                const filter = listing.filters.PaymentReceived(noteId);
-                const paymentEvents = await listing.queryFilter(filter, fromBlock, currentBlock);
+                const paymentFilter = listing.filters.PaymentReceived(noteId);
+                const paymentEvents = await listing.queryFilter(paymentFilter, fromBlock, currentBlock);
 
                 console.log(`Found ${paymentEvents.length} PaymentReceived events`);
 
+                // Get all Claimed events for this investor
+                const claimFilter = listing.filters.Claimed(noteId, address);
+                const claimEvents = await listing.queryFilter(claimFilter, fromBlock, currentBlock);
+
+                console.log(`Found ${claimEvents.length} Claimed events for investor`);
+
+                // Build map of claim transactions (by approximate timing or cumulative amount)
+                const claimTxHashes: string[] = [];
+                for (const claimEvent of claimEvents) {
+                    if ('args' in claimEvent && claimEvent.args) {
+                        claimTxHashes.push(claimEvent.transactionHash);
+                    }
+                }
+
                 const processedEvents: PaymentEvent[] = [];
-                for (const event of paymentEvents) {
+                for (let i = 0; i < paymentEvents.length; i++) {
+                    const event = paymentEvents[i];
                     try {
                         // Type guard to ensure event is EventLog
                         if ('args' in event && event.args) {
@@ -77,14 +93,17 @@ const InvestorPayments: React.FC = () => {
                             // Use block number as timestamp approximation (or current time)
                             const timestamp = new Date().toISOString();
 
-                            // We'll determine claimed status after we know the current claimable amount
+                            // Match claim transaction if available (simple approach: use corresponding claim)
+                            const claimTxHash = claimTxHashes[i] || undefined;
+
                             processedEvents.push({
                                 receivedAt: timestamp,
                                 depositAmount: depositAmount,
                                 yourShare: investorShare,
                                 share: share,
-                                status: 'Pending', // Will be updated below
-                                txHash: event.transactionHash
+                                status: claimTxHash ? 'Claimed' : 'Pending',
+                                depositTxHash: event.transactionHash,
+                                claimTxHash: claimTxHash
                             });
                         } else {
                             console.warn("Event has no args:", event);
@@ -94,19 +113,7 @@ const InvestorPayments: React.FC = () => {
                     }
                 }
 
-                // Get current claimable amount to determine status
-                const amountWei = await listing.claimable(noteId, address);
-                const currentClaimable = Number(amountWei) / 1_000_000;
-
-                // If claimable is 0 or very small, mark all as claimed
-                // Otherwise, mark all as pending (simple approach for now)
-                const allClaimed = currentClaimable < 0.01;
-
-                processedEvents.forEach(evt => {
-                    evt.status = allClaimed ? 'Claimed' : 'Pending';
-                });
-
-                console.log(`Processed ${processedEvents.length} events, all claimed: ${allClaimed}`);
+                console.log(`Processed ${processedEvents.length} events`);
                 setEvents(processedEvents);
             } catch (err) {
                 console.error("Error fetching yield events:", err);
@@ -151,9 +158,10 @@ const InvestorPayments: React.FC = () => {
             const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
             console.log("Claiming...");
             const tx = await listing.claim(noteId);
-            await tx.wait();
+            const receipt = await tx.wait();
 
-            alert("Funds claimed successfully!");
+            console.log("Claim successful! Tx Hash:", receipt.hash);
+            alert(`Funds claimed successfully! View on MantleScan: https://explorer.sepolia.mantle.xyz/tx/${receipt.hash}`);
             setClaimableAmount(0);
             setRefreshKey(prev => prev + 1); // Refresh to update event statuses
         } catch (err) {
