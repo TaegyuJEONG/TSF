@@ -13,13 +13,14 @@ const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 
 interface DocumentItemProps {
     title: string;
+    theme?: 'light' | 'dark';
 }
 
-const DocumentItem: React.FC<DocumentItemProps> = ({ title }) => {
+const DocumentItem: React.FC<DocumentItemProps> = ({ title, theme = 'light' }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', marginBottom: '12px', overflow: 'hidden', backgroundColor: 'white' }}>
+        <div style={{ border: `1px solid ${theme === 'dark' ? '#334155' : '#e5e7eb'}`, borderRadius: '8px', marginBottom: '12px', overflow: 'hidden', backgroundColor: theme === 'dark' ? '#0f172a' : 'white' }}>
             <div
                 onClick={() => setIsOpen(!isOpen)}
                 style={{
@@ -28,7 +29,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ title }) => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     cursor: 'pointer',
-                    backgroundColor: isOpen ? '#f9fafb' : 'white'
+                    backgroundColor: isOpen ? (theme === 'dark' ? '#1e293b' : '#f9fafb') : (theme === 'dark' ? '#0f172a' : 'white')
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -40,31 +41,31 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ title }) => {
                         <path d="M8 17H12" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         <text x="6.5" y="16.5" fontFamily="Arial" fontSize="6" fill="#EF4444" fontWeight="bold">PDF</text>
                     </svg>
-                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>{title}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: theme === 'dark' ? '#f1f5f9' : '#111827' }}>{title}</span>
                 </div>
                 {/* Chevrons */}
                 {isOpen ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 9L12 15L18 9" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M6 9L12 15L18 9" stroke={theme === 'dark' ? '#94a3b8' : '#9CA3AF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 ) : (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 18L15 12L9 6" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M9 18L15 12L9 6" stroke={theme === 'dark' ? '#94a3b8' : '#9CA3AF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 )}
             </div>
 
             {isOpen && (
-                <div style={{ padding: '24px', borderTop: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
+                <div style={{ padding: '24px', borderTop: `1px solid ${theme === 'dark' ? '#334155' : '#e5e7eb'}`, backgroundColor: theme === 'dark' ? '#1e293b' : '#f9fafb' }}>
                     <div style={{
                         height: '200px',
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
+                        backgroundColor: theme === 'dark' ? '#0f172a' : 'white',
+                        border: `1px solid ${theme === 'dark' ? '#334155' : '#e5e7eb'}`,
                         borderRadius: '4px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#9ca3af',
+                        color: theme === 'dark' ? '#94a3b8' : '#9ca3af',
                         fontSize: '13px'
                     }}>
                         PDF Preview Placeholder for {title}
@@ -91,9 +92,11 @@ interface ContractDocumentListProps {
         txResult: TransactionResult;
         auditData: any;
     } | null;
+    theme?: 'light' | 'dark'; // Optional theme prop, defaults to 'light'
+    showTokenizedNote?: boolean; // Show Tokenized Note document (for investors only)
 }
 
-const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose, data, initialCompletionData }) => {
+const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete, summary, onClose, data, initialCompletionData, theme = 'light', showTokenizedNote = false }) => {
     // If we have initial data, we are completed.
     const [paymentStatus, setPaymentStatus] = useState<'pending' | 'registering' | 'completed' | 'error'>(
         initialCompletionData ? 'completed' : 'pending'
@@ -107,13 +110,19 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
     );
     const [auditData, setAuditData] = useState<any>(initialCompletionData?.auditData || null);
 
-    const documents = [
+    const allDocuments = [
+        "Tokenized Note (Investment Certificate)",
         "Purchase Agreement",
         "Seller Financing Addendum",
         "Promissory Note",
         "Deed of Trust",
         "Amortization Schedule"
     ];
+
+    // Filter out Tokenized Note if not for investors
+    const documents = showTokenizedNote
+        ? allDocuments
+        : allDocuments.filter(doc => doc !== "Tokenized Note (Investment Certificate)");
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -170,9 +179,9 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
 
             // 2. Build Mock Credit Assessment
             const mockCreditAssessment = {
-                bureauScore: 720,
-                dti: 0.28,
-                incomeBand: "100k-150k",
+                bureauScore: 760,
+                dti: 0.25,
+                incomeBand: "200k-250k",
                 riskTier: "A",
                 decision: "Approve",
                 onChainCheck: true,
@@ -332,7 +341,7 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                     border: 'none',
                     fontSize: '24px',
                     cursor: 'pointer',
-                    color: '#9ca3af',
+                    color: theme === 'dark' ? '#94a3b8' : '#9ca3af',
                     zIndex: 10
                 }}
             >
@@ -340,40 +349,40 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
             </button>
 
             <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>Contract Documents</h2>
-                <p style={{ fontSize: '14px', color: '#6b7280' }}>Generated based on the agreed terms.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: theme === 'dark' ? '#f1f5f9' : '#111827', marginBottom: '8px' }}>Contract Documents</h2>
+                <p style={{ fontSize: '14px', color: theme === 'dark' ? '#94a3b8' : '#6b7280' }}>Generated based on the agreed terms.</p>
             </div>
 
             <div style={{ marginBottom: '32px' }}>
                 {documents.map((doc, index) => (
-                    <DocumentItem key={index} title={doc} />
+                    <DocumentItem key={index} title={doc} theme={theme} />
                 ))}
             </div>
 
             {/* Fee Summary */}
-            <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '24px', border: '1px solid #e5e7eb' }}>
+            <div style={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#f9fafb', padding: '20px', borderRadius: '8px', marginBottom: '24px', border: `1px solid ${theme === 'dark' ? '#334155' : '#e5e7eb'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#6b7280' }}>House Price</span>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+                    <span style={{ fontSize: '14px', color: theme === 'dark' ? '#94a3b8' : '#6b7280' }}>House Price</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: theme === 'dark' ? '#f1f5f9' : '#111827' }}>
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(summary.price)}
                     </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#6b7280' }}>Down Payment</span>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+                    <span style={{ fontSize: '14px', color: theme === 'dark' ? '#94a3b8' : '#6b7280' }}>Down Payment</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: theme === 'dark' ? '#f1f5f9' : '#111827' }}>
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(summary.downPayment)}
                     </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #d1d5db' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Contract Fee (1% of Principal)</span>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: `1px dashed ${theme === 'dark' ? '#475569' : '#d1d5db'}` }}>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: theme === 'dark' ? '#cbd5e1' : '#374151' }}>Contract Fee (1% of Principal)</span>
+                    <span style={{ fontSize: '16px', fontWeight: 700, color: theme === 'dark' ? '#f1f5f9' : '#111827' }}>
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(summary.contractFee)}
                     </span>
                 </div>
 
                 {/* Platform Servicing Fee Disclosure */}
-                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-                    <div style={{ fontSize: '12px', color: '#6b7280', lineHeight: '1.5' }}>
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${theme === 'dark' ? '#334155' : '#e5e7eb'}` }}>
+                    <div style={{ fontSize: '12px', color: theme === 'dark' ? '#94a3b8' : '#6b7280', lineHeight: '1.5' }}>
                         <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Platform Servicing Fee:</span> 1% of monthly P&I deducted for administration and asset servicing
                     </div>
                 </div>

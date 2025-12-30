@@ -26,15 +26,15 @@ const BuyerAsset: React.FC = () => {
     // Mock Listing Data for Buyer
     const listingData = {
         image: listing1Image,
-        price: 450000,
+        price: 1200000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-        sqft: 1982,
+        sqft: 5922,
         specs: {
-            dp: 45000,
-            term: 30,
+            dp: 360000,
+            term: 240,
             interest: 6,
-            beds: 3,
-            baths: 2
+            beds: 6,
+            baths: 5
         },
         tier: 'Tier A',
         negotiable: true,

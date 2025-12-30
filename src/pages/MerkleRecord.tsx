@@ -324,7 +324,7 @@ const MerkleRecord: React.FC = () => {
                                 const grossAmount = event.amount?.total || 0;
                                 const platformFee = event.platformFee ?? (grossAmount * 0.01);
                                 const netAmount = event.netAmount ?? (grossAmount - platformFee);
-                                const fundingStatus = event.fundingStatus || (i >= paymentLedger.events.length - 2 ? "PRE_FUNDING" : "POST_FUNDING");
+                                const fundingStatus = event.fundingStatus || (i >= paymentLedger.events.length - 1 ? "PRE_FUNDING" : "POST_FUNDING");
 
                                 const isPreFunding = fundingStatus === "PRE_FUNDING";
                                 const feeRecipient = isPreFunding ? "Homeowner" : "Smart Contract";
@@ -403,7 +403,7 @@ const MerkleRecord: React.FC = () => {
                                                 </div>
 
                                                 {/* Funding Status Badge - Only show POST_FUNDING milestone */}
-                                                {!isPreFunding && (i === paymentLedger.events.length - 1 || fundingStatus !== (paymentLedger.events.slice().reverse()[i + 1]?.fundingStatus || (i + 1 >= paymentLedger.events.length - 2 ? "PRE_FUNDING" : "POST_FUNDING"))) && (
+                                                {!isPreFunding && (i === paymentLedger.events.length - 1 || fundingStatus !== (paymentLedger.events.slice().reverse()[i + 1]?.fundingStatus || (i + 1 >= paymentLedger.events.length - 1 ? "PRE_FUNDING" : "POST_FUNDING"))) && (
                                                     <div style={{
                                                         padding: '12px 16px',
                                                         backgroundColor: isInvestor ? '#064e3b' : '#f0fdf4',
@@ -482,7 +482,7 @@ const MerkleRecord: React.FC = () => {
                                             let totalDistributed = 0;
                                             if (paymentAuditData?.paymentLedger?.events) {
                                                 paymentAuditData.paymentLedger.events.forEach((event: any, idx: number) => {
-                                                    const fundingStatus = event.fundingStatus || (idx >= paymentAuditData.paymentLedger.events.length - 2 ? "PRE_FUNDING" : "POST_FUNDING");
+                                                    const fundingStatus = event.fundingStatus || (idx >= paymentAuditData.paymentLedger.events.length - 1 ? "PRE_FUNDING" : "POST_FUNDING");
                                                     if (fundingStatus === "POST_FUNDING") {
                                                         const grossAmount = event.amount?.total || 0;
                                                         const platformFee = event.platformFee ?? (grossAmount * 0.01);
@@ -529,7 +529,7 @@ const MerkleRecord: React.FC = () => {
                                     {/* Payment Items */}
                                     {paymentAuditData?.paymentLedger?.events.slice().reverse()
                                         .filter((event: any, i: number) => {
-                                            const fundingStatus = event.fundingStatus || (i >= paymentAuditData.paymentLedger.events.length - 2 ? "PRE_FUNDING" : "POST_FUNDING");
+                                            const fundingStatus = event.fundingStatus || (i >= paymentAuditData.paymentLedger.events.length - 1 ? "PRE_FUNDING" : "POST_FUNDING");
                                             return fundingStatus === "POST_FUNDING"; // Only show POST_FUNDING payments
                                         })
                                         .map((event: any, i: number) => {

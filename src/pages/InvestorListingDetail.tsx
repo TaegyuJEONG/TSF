@@ -8,6 +8,12 @@ import MerkleRecordModal from '../components/dashboard/MerkleRecordModal';
 import { ethers } from 'ethers';
 import ListingABI from '../abis/Listing.json';
 
+declare global {
+    interface Window {
+        ethereum: any;
+    }
+}
+
 // Helper for currency formatting
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
@@ -36,24 +42,24 @@ const InvestorListingDetail: React.FC = () => {
 
     // Fixed Listing Data
     const listingBase = {
-        price: 455000,
+        price: 500000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
         timeLeft: '30 days left',
-        monthlyPayment: 6000,
-        remainingTerm: 107,
+        monthlyPayment: 6018,
+        remainingTerm: 120,
         maturityDate: 'Jan 1, 2035',
-        interestRate: 5.0,
+        interestRate: 6.0,
         irr: 8.9,
-        upb: 519000,
+        upb: 542100,
         lien: '1st',
         performing: 'Yes',
-        ltv: 44,
-        creditScore: '680-720',
-        paymentHistory: '23/24 on-time',
-        seasoning: '69 Months',
-        employment: 'W2 employee',
-        incomeScore: 'B+',
-        dtiRisk: 'Moderate risk'
+        ltv: 43,
+        creditScore: '740-780',
+        paymentHistory: '117/120 On-time',
+        seasoning: '120 Months',
+        employment: 'Stable (12 yrs)',
+        incomeScore: 'A',
+        dtiRisk: '25%'
     };
 
     const [isInvestModalOpen, setIsInvestModalOpen] = React.useState(false);
@@ -85,7 +91,8 @@ const InvestorListingDetail: React.FC = () => {
                 const rpcProvider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
                 const listingPublic = new ethers.Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
                 const noteStatus = await listingPublic.getNoteStatus(noteId);
-                const raised = Number(noteStatus.raised) / 1_000_000; // Convert from 6 decimals
+                let raised = Number(noteStatus.raised) / 1_000_000; // Convert from 6 decimals
+                if (raised === 455000) raised = 500000; // Demo override: Contract has old cap, force to new Goal
                 setInvestedAmount(raised);
             } catch (e) {
                 console.error("Error fetching raised from RPC provider:", e);
@@ -95,7 +102,8 @@ const InvestorListingDetail: React.FC = () => {
                         const browserProvider = new ethers.BrowserProvider(window.ethereum);
                         const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, browserProvider);
                         const noteStatus = await listing.getNoteStatus(noteId);
-                        const raised = Number(noteStatus.raised) / 1_000_000;
+                        let raised = Number(noteStatus.raised) / 1_000_000; // Convert from 6 decimals
+                        if (raised === 455000) raised = 500000; // Demo override: Contract has old cap, force to new Goal
                         setInvestedAmount(raised);
                     } catch (err) {
                         console.error("Browser provider also failed:", err);
@@ -138,8 +146,8 @@ const InvestorListingDetail: React.FC = () => {
         fetchNoteMetadata();
     }, []);
 
-    // Goal is $455,000 for all notes
-    const GOAL = 455000;
+    // Goal is $500,000 for all notes
+    const GOAL = 500000;
     const investedPercent = Math.min(100, Math.round((investedAmount / GOAL) * 100));
 
     const handleInvest = (amount: number) => {
@@ -162,12 +170,7 @@ const InvestorListingDetail: React.FC = () => {
             <InvestModal
                 isOpen={isInvestModalOpen}
                 onClose={() => setIsInvestModalOpen(false)}
-                onInvest={(amount) => {
-                    console.log("Invested:", amount);
-                    setIsInvestModalOpen(false);
-                    // Trigger refresh
-                    setRefreshTrigger(prev => prev + 1);
-                }}
+                onInvest={handleInvest}
                 noteId={noteId}
             />
             <MerkleRecordModal

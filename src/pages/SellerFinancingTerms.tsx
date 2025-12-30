@@ -17,7 +17,7 @@ const SellerFinancingTerms: React.FC = () => {
     const [price, setPrice] = useState<string>('');
     const [downPaymentPercent, setDownPaymentPercent] = useState<string>('');
     const [interestRate, setInterestRate] = useState<string>('');
-    const [termYears, setTermYears] = useState<string>('30');
+    const [termMonths, setTermMonths] = useState<string>('');
     const [isNegotiable, setIsNegotiable] = useState(false);
     const [showRiskTooltip, setShowRiskTooltip] = useState(false);
 
@@ -25,13 +25,13 @@ const SellerFinancingTerms: React.FC = () => {
     const priceNum = parseInt(price.replace(/,/g, '')) || 0;
     const downPaymentNum = parseFloat(downPaymentPercent) || 0;
     const rateNum = parseFloat(interestRate) || 0;
-    const termNum = parseInt(termYears) || 30;
+    const termNum = parseInt(termMonths) || 0;
 
     // Calculations
     const downPaymentAmount = priceNum * (downPaymentNum / 100);
     const loanAmount = priceNum - downPaymentAmount;
     const monthlyRate = rateNum / 100 / 12;
-    const numberOfPayments = termNum * 12;
+    const numberOfPayments = termNum; // Already in months
 
     const monthlyPayment = (loanAmount > 0)
         ? (rateNum > 0)
@@ -134,10 +134,10 @@ const SellerFinancingTerms: React.FC = () => {
             state: {
                 photos,
                 price: priceNum,
-                downPayment: downPaymentNum,
+                downPayment: downPaymentAmount, // Pass dollar amount, not percentage
                 interestRate: rateNum,
-                termYears: termNum,
-                monthlyPayment,
+                termYears: Math.round(termNum / 12), // Convert months to years for display
+                monthlyPayment: Math.round(monthlyPayment), // Round to nearest dollar
                 riskCategory,
                 zestimate: mockZestimate
             }
@@ -232,12 +232,12 @@ const SellerFinancingTerms: React.FC = () => {
                     {/* Loan Term */}
                     <div style={{ marginBottom: '32px' }}>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>
-                            Loan Term (years)
+                            Loan Term (months)
                         </label>
                         <Input
-                            value={termYears}
-                            onChange={(e) => setTermYears(e.target.value)}
-                            placeholder="e.g. 30"
+                            value={termMonths}
+                            onChange={(e) => setTermMonths(e.target.value)}
+                            placeholder="e.g. 360"
                             style={{ margin: 0 }}
                         />
                     </div>
@@ -246,15 +246,21 @@ const SellerFinancingTerms: React.FC = () => {
                     <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', backgroundColor: '#f9fafb', marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
                             <span style={{ color: '#6b7280' }}>Monthly P&I:</span>
-                            <span style={{ fontWeight: 600 }}>{formatCurrency(monthlyPayment)}</span>
+                            <span style={{ fontWeight: 600 }}>
+                                {isFinite(monthlyPayment) && monthlyPayment > 0 ? formatCurrency(monthlyPayment) : '-'}
+                            </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
                             <span style={{ color: '#6b7280' }}>Total Repayment:</span>
-                            <span style={{ fontWeight: 600 }}>{formatCurrency(totalRepayment)}</span>
+                            <span style={{ fontWeight: 600 }}>
+                                {isFinite(totalRepayment) && totalRepayment > 0 ? formatCurrency(totalRepayment) : '-'}
+                            </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span style={{ color: '#6b7280' }}>Amortization:</span>
-                            <span style={{ fontWeight: 600 }}>{numberOfPayments} Months</span>
+                            <span style={{ fontWeight: 600 }}>
+                                {numberOfPayments > 0 ? `${numberOfPayments} months` : '-'}
+                            </span>
                         </div>
 
                         {/* Risk Category Badge */}
@@ -333,7 +339,7 @@ const SellerFinancingTerms: React.FC = () => {
                         <div style={{ marginBottom: '16px' }}>
                             <div style={{ color: '#166534', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Tier A (Conservative)</div>
                             <ul style={{ fontSize: '13px', color: '#4b5563', paddingLeft: '20px', margin: 0, lineHeight: '1.6' }}>
-                                <li>High Down Payment ({'>'}30%)</li>
+                                <li>High Down Payment (≥30%)</li>
                                 <li>Long-term cash flow</li>
                                 <li>Easy to liquidate</li>
                             </ul>
@@ -342,7 +348,7 @@ const SellerFinancingTerms: React.FC = () => {
                         <div style={{ marginBottom: '16px' }}>
                             <div style={{ color: '#b45309', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Tier B (Balanced)</div>
                             <ul style={{ fontSize: '13px', color: '#4b5563', paddingLeft: '20px', margin: 0, lineHeight: '1.6' }}>
-                                <li>Medium Down Payment (10-30%)</li>
+                                <li>Medium Down Payment (≥10%, {'<'}30%)</li>
                                 <li>Mid-term cash flow</li>
                                 <li>Standard Market Rates</li>
                             </ul>

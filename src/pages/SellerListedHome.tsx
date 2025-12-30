@@ -11,19 +11,21 @@ const SellerListedHome: React.FC = () => {
 
     const listingData = {
         image: listing1Image,
-        price: 450000,
+        price: 1200000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-        sqft: 1982,
+        sqft: 5922,
         specs: {
-            dp: 45000,
-            term: 30,
+            dp: 360000,
+            term: 240,
             interest: 6,
-            beds: 3,
-            baths: 2
+            beds: 6,
+            baths: 5
         },
         tier: 'Tier A',
         negotiable: true,
-        description: "This beautiful newly painted 3 bedroom, 2 bath condo offers an open an open floor plan with abundant natural light and small private balcony with city view, perfect for relaxing, weekend coffee, or ice cream. Ideally located near the 101 freeway, Ventura Blvd. The master has a private mirrored vanity. The bedrooms have mirrored closet doors. Walking distance to Tarzana village safari, shopping centers."
+        zestimate: 1150000,
+        monthlyPayment: 6018,
+        description: "This stunning 6 bedroom, 5 bath estate offers an expansive open floor plan with soaring ceilings and abundant natural light throughout its 5,922 square feet. The gourmet kitchen features high-end appliances and opens to a spacious family room, perfect for entertaining. The luxurious master suite includes a spa-like bathroom and walk-in closet. Additional bedrooms are generously sized with ample storage. The property features a beautiful backyard with mountain views, ideal for outdoor living and relaxation. Located in a premier Los Angeles neighborhood near top-rated schools, shopping, and dining."
     };
 
     return (
@@ -64,6 +66,16 @@ const SellerListedHome: React.FC = () => {
                             baths: listingData.specs.baths
                         }}
                         description={listingData.description}
+                        showEditButton={true}
+
+                        // New Financial Props
+                        zestimate={listingData.zestimate}
+                        downPayment={listingData.specs.dp}
+                        term={listingData.specs.term}
+                        interestRate={listingData.specs.interest}
+                        monthlyPayment={listingData.monthlyPayment}
+                        riskCategory={listingData.tier}
+                        negotiable={listingData.negotiable}
                     />
                 </div>
             </div>

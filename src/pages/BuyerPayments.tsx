@@ -10,7 +10,7 @@ const BuyerPayments: React.FC = () => {
 
     // Modal State
     const [isPayModalOpen, setPayModalOpen] = useState(false);
-    const [selectedOverdueItem, setSelectedOverdueItem] = useState<{ amount: number, date: string } | null>(null);
+    const [selectedOverdueItem, setSelectedOverdueItem] = useState<{ amount: number, principal: number, interest: number, date: string } | null>(null);
 
     // Data State
     const [events, setEvents] = useState<PaymentEvent[]>([]);
@@ -26,20 +26,46 @@ const BuyerPayments: React.FC = () => {
         setPayModalOpen(false);
     };
 
-    const handleOpenPayModal = (amount: number, date: string) => {
-        setSelectedOverdueItem({ amount, date });
+    const handleOpenPayModal = (amount: number, principal: number, interest: number, date: string) => {
+        setSelectedOverdueItem({ amount, principal, interest, date });
         setPayModalOpen(true);
     };
 
     // --- Mock Data Construction based on stored events ---
-    const initialSchedule = [
-        { date: '2025-01-22', principal: 1500, interest: 1000 },
-        { date: '2025-02-22', principal: 1500, interest: 1000 },
-        { date: '2025-03-22', principal: 1500, interest: 1000 },
-        { date: '2025-04-22', principal: 1500, interest: 1000 },
-        { date: '2025-05-22', principal: 1500, interest: 1000 },
-        { date: '2025-06-22', principal: 1500, interest: 1000 },
-    ];
+    // --- Mock Data Construction based on stored events ---
+    const generateMockSchedule = () => {
+        const schedule = [];
+        let balance = 840000; // $1.2M - $360k
+        const annualRate = 0.06;
+        const monthlyRate = annualRate / 12;
+        const monthlyPayment = 6018;
+        const startDate = new Date(2025, 0, 22); // Jan 22, 2025
+
+        for (let i = 0; i < 12; i++) {
+            const interest = balance * monthlyRate;
+            const principal = monthlyPayment - interest;
+
+            // Format Date YYYY-MM-DD
+            const d = new Date(startDate);
+            d.setMonth(startDate.getMonth() + i);
+            const dateStr = [
+                d.getFullYear(),
+                String(d.getMonth() + 1).padStart(2, '0'),
+                String(d.getDate()).padStart(2, '0')
+            ].join('-');
+
+            schedule.push({
+                date: dateStr,
+                principal: parseFloat(principal.toFixed(2)),
+                interest: parseFloat(interest.toFixed(2))
+            });
+
+            balance -= principal;
+        }
+        return schedule;
+    };
+
+    const initialSchedule = generateMockSchedule();
 
     const mergedSchedule = initialSchedule.map((item, index) => {
         let status = 'Unpaid';
@@ -69,10 +95,10 @@ const BuyerPayments: React.FC = () => {
 
     const listingData = {
         image: listing1Image,
-        price: 450000,
+        price: 1200000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-        sqft: 1982,
-        specs: { dp: 45000, term: 30, interest: 6, beds: 3, baths: 2 },
+        sqft: 5922,
+        specs: { dp: 360000, term: 240, interest: 6, beds: 6, baths: 5 },
         tier: 'Tier A',
         negotiable: true,
     };
@@ -89,6 +115,8 @@ const BuyerPayments: React.FC = () => {
                     isOpen={isPayModalOpen}
                     onClose={() => setPayModalOpen(false)}
                     dueAmount={selectedOverdueItem.amount}
+                    principalAmount={selectedOverdueItem.principal}
+                    interestAmount={selectedOverdueItem.interest}
                     dueDate={selectedOverdueItem.date}
                     onPaymentSuccess={handlePaymentSuccess}
                 />
@@ -173,7 +201,7 @@ const BuyerPayments: React.FC = () => {
                                                 <td style={{ padding: '12px 8px' }}>
                                                     {p.status !== 'Paid' && (
                                                         <button
-                                                            onClick={() => handleOpenPayModal(p.total, p.date)}
+                                                            onClick={() => handleOpenPayModal(p.total, p.principal, p.interest, p.date)}
                                                             style={{
                                                                 backgroundColor: '#000', color: 'white', border: 'none',
                                                                 borderRadius: '6px', padding: '6px 12px', fontSize: '12px',

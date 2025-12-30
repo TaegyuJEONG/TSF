@@ -23,14 +23,40 @@ const Payments: React.FC = () => {
     // We combine "Official History" (from events) with "Projected Schedule" (mock)
 
     // 1. Initial Schedule (Mock)
-    const initialSchedule = [
-        { date: '2025-01-22', principal: 1500, interest: 1000 },
-        { date: '2025-02-22', principal: 1500, interest: 1000 },
-        { date: '2025-03-22', principal: 1500, interest: 1000 }, // Paid in mock
-        { date: '2025-04-22', principal: 1500, interest: 1000 }, // Overdue!
-        { date: '2025-05-22', principal: 1500, interest: 1000 },
-        { date: '2025-06-22', principal: 1500, interest: 1000 },
-    ];
+    // 1. Initial Schedule (Generated for Amortization)
+    const generateMockSchedule = () => {
+        const schedule = [];
+        let balance = 840000; // $1.2M - $360k
+        const annualRate = 0.06;
+        const monthlyRate = annualRate / 12;
+        const monthlyPayment = 6018;
+        const startDate = new Date(2025, 0, 22); // Jan 22, 2025
+
+        for (let i = 0; i < 12; i++) {
+            const interest = balance * monthlyRate;
+            const principal = monthlyPayment - interest;
+
+            // Format Date YYYY-MM-DD
+            const d = new Date(startDate);
+            d.setMonth(startDate.getMonth() + i);
+            const dateStr = [
+                d.getFullYear(),
+                String(d.getMonth() + 1).padStart(2, '0'),
+                String(d.getDate()).padStart(2, '0')
+            ].join('-');
+
+            schedule.push({
+                date: dateStr,
+                principal: parseFloat(principal.toFixed(2)),
+                interest: parseFloat(interest.toFixed(2))
+            });
+
+            balance -= principal;
+        }
+        return schedule;
+    };
+
+    const initialSchedule = generateMockSchedule();
 
     // 2. Merge Logic
     // For this demo, we will check if an event exists for a month. A real app would match IDs.
@@ -54,13 +80,8 @@ const Payments: React.FC = () => {
             const evt = events[index]; // Assuming sort order matches schedule
             const dateObj = new Date(evt.receivedAt);
             receivedOn = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
-        } else {
-            // Specific Mock Logic for April: Overdue
-            if (item.date === '2025-04-22') {
-                status = 'Unpaid'; // It is technically unpaid, but we mark it overdrive for logic
-                isOverdue = true;
-            }
         }
+        // All unpaid items remain as 'Unpaid' with isOverdue = false
 
         return {
             ...item,
@@ -77,10 +98,10 @@ const Payments: React.FC = () => {
     // Marketplace Card Data
     const listingData = {
         image: listing1Image,
-        price: 450000,
+        price: 1200000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-        sqft: 1982,
-        specs: { dp: 45000, term: 30, interest: 6, beds: 3, baths: 2 },
+        sqft: 5922,
+        specs: { dp: 360000, term: 240, interest: 6, beds: 6, baths: 5 },
         tier: 'Tier A',
         negotiable: true,
     };

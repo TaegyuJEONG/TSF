@@ -17,11 +17,11 @@ interface NoteValuationModalProps {
 
 const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
 
-const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList }) => {
+const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList, upb }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState<'pricing' | 'cashout' | 'processing' | 'confirmed'>('pricing');
     const [selectedPreset, setSelectedPreset] = useState<'fast' | 'market' | 'premium' | 'custom' | null>(null);
-    const [customPrice, setCustomPrice] = useState<string>('500000');
+    const [customPrice, setCustomPrice] = useState<string>(Math.round(upb * 0.92).toString());
     const [txHash, setTxHash] = useState<string>('');
 
     // Reset state when opening
@@ -35,11 +35,11 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
 
     if (!isOpen) return null;
 
-    // Pricing Logic (Mock) based on UPB (~519k)
+    // Pricing Logic (Mock) based on UPB
     const presets = {
-        fast: { price: 480000, yield: '7.1%', label: 'Sell faster' },
-        market: { price: 500000, yield: '6.0%', label: 'Market average' },
-        premium: { price: 510000, yield: '5.5%', label: 'Premium' }
+        fast: { price: Math.round(upb * 0.88), yield: '7.1%', label: 'Sell faster' },
+        market: { price: Math.round(upb * 0.92), yield: '6.0%', label: 'Market average' },
+        premium: { price: Math.round(upb * 0.94), yield: '5.5%', label: 'Premium' }
     };
 
     const getCurrentPrice = () => {
@@ -185,11 +185,11 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                                     <div style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Estimated Note Value</div>
                                 </div>
                                 <div style={{ fontSize: '24px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>
-                                    {formatCurrency(500000)}
+                                    {formatCurrency(presets.market.price)}
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#4b5563' }}>
-                                    <span>As % of UPB: <strong>96%</strong></span>
+                                    <span>As % of UPB: <strong>92%</strong></span>
                                     <span>Implied Buyer Yield: <strong>6.0%</strong></span>
                                 </div>
                             </div>
@@ -198,10 +198,10 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                             <div style={{ marginBottom: '24px' }}>
                                 <div style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Pricing Rationale</div>
                                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#4b5563', lineHeight: '1.6' }}>
-                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>LTV</span> <strong>44% (Low Risk)</strong></li>
-                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>Payment History</span> <strong>23/24 On-time</strong></li>
-                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>Seasoning</span> <strong>69 Months</strong></li>
-                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>Buyer Credit</span> <strong>680-720</strong></li>
+                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>LTV</span> <strong>43% (Very Low Risk)</strong></li>
+                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>Payment History</span> <strong>117/120 On-time</strong></li>
+                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>Seasoning</span> <strong>120 Months</strong></li>
+                                    <li style={{ display: 'flex', justifyContent: 'space-between' }}><span>Buyer Credit</span> <strong>740-780</strong></li>
                                 </ul>
                             </div>
                         </div>
@@ -305,7 +305,7 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
 
                             <div style={{ marginBottom: '24px', padding: '0 8px' }}>
                                 <div style={{ fontSize: '13px', color: '#6b7280', lineHeight: '1.5', textAlign: 'center' }}>
-                                    Fees are deducted from the investment proceeds only upon 100% funding completion within the 30-day investment period.
+                                    Fees are deducted from the investment proceeds only upon <strong>100% funding completion</strong> <strong>within the 30-day investment period</strong>.
                                 </div>
                             </div>
 

@@ -18,13 +18,13 @@ const Marketplace: React.FC = () => {
         {
             id: 1,
             address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-            price: userListing.price || 450000,
-            downPayment: userListing.downPayment || 45000,
-            term: userListing.termYears || 30,
+            price: userListing.price || 1200000,
+            downPayment: userListing.downPayment || 360000,
+            term: userListing.termYears || 240,
             rate: userListing.interestRate || 6,
-            beds: 3,
-            baths: 2,
-            sqft: 1982,
+            beds: 6,
+            baths: 5,
+            sqft: 5922,
             image: heroImage,
             tier: userListing.riskCategory || 'Tier A',
             negotiable: true,
@@ -34,9 +34,9 @@ const Marketplace: React.FC = () => {
             id: 2,
             address: '2845 Rolling Hills, Sherman Oaks, CA 91403',
             price: 850000,
-            downPayment: 127500,
-            term: 30,
-            rate: 6.2,
+            downPayment: 170000,
+            term: 360,
+            rate: 7.5,
             beds: 4,
             baths: 3,
             sqft: 2400,
@@ -47,13 +47,13 @@ const Marketplace: React.FC = () => {
         {
             id: 3,
             address: '1029 Vista Del Mar, Santa Monica, CA 90401',
-            price: 1200000,
-            downPayment: 120000,
-            term: 15,
-            rate: 7.5,
+            price: 410000,
+            downPayment: 41000,
+            term: 120,
+            rate: 10,
             beds: 2,
             baths: 2,
-            sqft: 1100,
+            sqft: 1450,
             image: image3, // Reuse for mock
             tier: 'Tier C',
             negotiable: true
@@ -151,7 +151,7 @@ const Marketplace: React.FC = () => {
                                 </div>
 
                                 <div style={{ fontSize: '13px', color: '#374151', marginBottom: '12px', lineHeight: '1.6' }}>
-                                    DP {formatCurrency(listing.downPayment).replace('.00', '')} | Term {listing.term}y | Interest {listing.rate}%
+                                    DP {formatCurrency(listing.downPayment).replace('.00', '')} | Term {listing.term}m | Interest {listing.rate}%
                                 </div>
 
                                 <div style={{ fontSize: '13px', color: '#4b5563', marginBottom: '12px' }}>

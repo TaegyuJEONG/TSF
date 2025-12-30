@@ -7,7 +7,7 @@ import ContractDocumentList from '../components/contract/ContractDocumentList';
 
 const Contract: React.FC = () => {
     // Persistence Key
-    const STORAGE_KEY = 'tsf_contract_page_state_v1';
+    const STORAGE_KEY = 'tsf_contract_page_state_v2';
 
     // Lazy Initializers
     const loadState = () => {
@@ -30,12 +30,12 @@ const Contract: React.FC = () => {
     // Form State
     const [contractData, setContractData] = useState<ContractData>(savedState?.contractData || {
         buyer: null,
-        price: '475,000',
+        price: '1,200,000',
         downPaymentPercent: '30',
         closingDate: '',
-        interestRate: '5.5',
-        term: '30',
-        termUnit: 'years',
+        interestRate: '6.0',
+        term: '240',
+        termUnit: 'months',
         paymentStructure: 'Fully Amortized',
         balloonTerm: '',
         securityInstrument: 'Deed of Trust',
@@ -116,12 +116,12 @@ const Contract: React.FC = () => {
         // Reset for new contract
         const initialData: ContractData = {
             buyer: null,
-            price: '475,000',
+            price: '1,200,000',
             downPaymentPercent: '30',
             closingDate: '',
-            interestRate: '5.5',
-            term: '30',
-            termUnit: 'years',
+            interestRate: '6.0',
+            term: '240',
+            termUnit: 'months',
             paymentStructure: 'Fully Amortized',
             balloonTerm: '',
             securityInstrument: 'Deed of Trust',
@@ -167,15 +167,15 @@ const Contract: React.FC = () => {
                     <div style={{ marginBottom: '24px' }}>
                         <MarketplaceCard
                             address="5931 Abernathy Dr, Los Angeles, CA 90045"
-                            price={475000}
+                            price={1200000}
                             specs={{
-                                dp: 45000,
-                                term: 30,
+                                dp: 360000,
+                                term: 240,
                                 interest: 6,
-                                beds: 3,
-                                baths: 2
+                                beds: 6,
+                                baths: 5
                             }}
-                            sqft={1982}
+                            sqft={5922}
                             image={heroImage}
                             tier={riskCategory || 'Tier A'}
                             negotiable={true}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import BuyerProfileCard from '../components/dashboard/BuyerProfileCard';
+import ProfileCard from '../components/dashboard/ProfileCard';
 import VisitRequestSchedule from '../components/dashboard/VisitRequestSchedule';
 import VisitAcceptanceModal from '../components/dashboard/VisitAcceptanceModal';
 
@@ -9,14 +9,14 @@ const VisitRequests: React.FC = () => {
 
     const buyerData = {
         name: "Chris R.",
-        employment: "Stable (3 years, full-time)",
-        income: "$6,200/mo",
-        dti: "38%",
-        creditGrade: "B+ (660 equivalent)",
-        downPayment: "$35,000 (12%)",
+        employment: "Stable (12 years, full-time)",
+        income: "$20,000/mo",
+        dti: "25%",
+        creditGrade: "A (760 equivalent)",
+        downPayment: "$360,000 (30%)",
         pti: "28%",
-        riskGrade: "Medium-low risk",
-        evaluationDate: "10-Dec-2025"
+        riskGrade: "Tier A",
+        evaluationDate: "29-Dec-2025"
     };
 
     const visitorContact = {
@@ -40,7 +40,7 @@ const VisitRequests: React.FC = () => {
     return (
         <div className="container" style={{ padding: '32px 0' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '32px', alignItems: 'start' }}>
-                <BuyerProfileCard data={buyerData} />
+                <ProfileCard data={buyerData} />
                 <VisitRequestSchedule
                     slots={requestSlots}
                     message={requestMessage}

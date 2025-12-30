@@ -29,15 +29,15 @@ const NoteOverview: React.FC = () => {
     // Mock data matching Marketplace Listing #1 (Same as SellerListedHome)
     const listingData = {
         image: listing1Image,
-        price: 450000,
+        price: 1200000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-        sqft: 1982,
+        sqft: 5922,
         specs: {
-            dp: 45000,
-            term: 30,
+            dp: 360000,
+            term: 240,
             interest: 6,
-            beds: 3,
-            baths: 2
+            beds: 6,
+            baths: 5
         },
         tier: 'Tier A',
         negotiable: true,
@@ -133,10 +133,10 @@ const NoteOverview: React.FC = () => {
                     <div style={{ marginBottom: '32px' }}>
                         <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Cash Flow Summary</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                            <StatCard label="Total Repayment Amount" value="$1 056 000" />
-                            <StatCard label="Total Paid P&I" value="$414 000" />
-                            <StatCard label="Payments Remaining(m)" value="107" />
-                            <StatCard label="Remaining P&I" value="$642 000" />
+                            <StatCard label="Total Repayment Amount" value="$1,444,320" />
+                            <StatCard label="Total Paid P&I" value="$722,160" />
+                            <StatCard label="Payments Remaining(m)" value="120" />
+                            <StatCard label="Remaining P&I" value="$722,160" />
                         </div>
                     </div>
 
@@ -144,10 +144,10 @@ const NoteOverview: React.FC = () => {
                     <div style={{ marginBottom: '32px' }}>
                         <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Note Value Summary</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                            <StatCard label="Property Value" value="$1.19M" />
-                            <StatCard label="LTV" value="44%" />
-                            <StatCard label="UPB" value="$519.2K" />
-                            <StatCard label="Interest rate" value="5%" />
+                            <StatCard label="Property Value" value="$1.25M" />
+                            <StatCard label="LTV" value="43%" />
+                            <StatCard label="UPB" value="$542.1K" />
+                            <StatCard label="Interest rate" value="6%" />
                         </div>
                     </div>
 
@@ -155,12 +155,12 @@ const NoteOverview: React.FC = () => {
                     <div style={{ marginBottom: '32px' }}>
                         <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>Buyer Summary</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                            <StatCard label="Credit Score Band:" value="680-720" />
-                            <StatCard label="Payment consistency" value="23/24 on-time" />
-                            <StatCard label="Seasoning" value="69 Months" />
-                            <StatCard label="Employment" value="W2 employee" subValue="(verified)" />
-                            <StatCard label="Income stability score" value="B+" />
-                            <StatCard label="DTI Estimate" value="Moderate risk" /> {/* Split text handling might be needed if strictly matching formatting "Moder ate risk" linebreak, but "Moderate risk" is cleaner */}
+                            <StatCard label="Credit Score Band:" value="740-780" />
+                            <StatCard label="Payment consistency" value="117/120 On-time" />
+                            <StatCard label="Seasoning" value="120 Months" />
+                            <StatCard label="Employment" value="Stable (12 yrs)" subValue="(verified)" />
+                            <StatCard label="Income stability score" value="A" />
+                            <StatCard label="DTI Estimate" value="25%" />
                         </div>
                     </div>
 
@@ -205,7 +205,7 @@ const NoteOverview: React.FC = () => {
                 isOpen={isValuationModalOpen}
                 onClose={() => setIsValuationModalOpen(false)}
                 onList={handleListNote}
-                upb={519200}
+                upb={542100}
             />
 
         </div>

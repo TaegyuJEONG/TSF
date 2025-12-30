@@ -34,7 +34,7 @@ const SelectRole: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%', marginBottom: '64px' }}>
                 <button
-                    onClick={() => navigate('/create-profile')}
+                    onClick={() => navigate('/marketplace')}
                     style={{
                         background: 'none',
                         border: 'none',
@@ -60,7 +60,13 @@ const SelectRole: React.FC = () => {
                     {roles.map((role) => (
                         <div
                             key={role.id}
-                            onClick={() => navigate(role.id === 'buyer' ? '/buying-power' : (role.id === 'owner' ? '/owner-onboarding' : '/investor/connect-wallet'))}
+                            onClick={() => {
+                                if (role.id === 'investor') {
+                                    navigate('/investor/connect-wallet');
+                                } else {
+                                    navigate(`/create-profile?role=${role.id}`);
+                                }
+                            }}
                             onMouseEnter={() => setHoveredRole(role.id)}
                             onMouseLeave={() => setHoveredRole(null)}
                             style={{

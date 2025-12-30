@@ -12,6 +12,8 @@ interface PaymentProcessModalProps {
     isOpen: boolean;
     onClose: () => void;
     dueAmount: number;
+    principalAmount: number;
+    interestAmount: number;
     dueDate: string;
     onPaymentSuccess: (event: PaymentEvent) => void;
 }
@@ -23,6 +25,8 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
     isOpen,
     onClose,
     dueAmount,
+    principalAmount,
+    interestAmount,
     dueDate,
     onPaymentSuccess
 }) => {
@@ -55,14 +59,15 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                 // BEFORE 100%: TSF → TSF anchoring only (데이터만 기록)
                 console.log("Funding incomplete. Anchoring payment data only (TSF→TSF)...");
 
-                const principal = dueAmount * 0.6;
-                const interest = dueAmount * 0.4;
+                const principal = principalAmount;
+                const interest = interestAmount;
 
                 const paymentData = {
                     type: 'PAYMENT_RECORD',
                     scheduledDueDate: dueDate,
                     receivedAt: new Date().toISOString(),
                     amount: { principal, interest, total: dueAmount, currency: 'USD' },
+                    fundingStatus: 'PRE_FUNDING',
                     status: 'ANCHORED_PRE_FUNDING'
                 };
 
@@ -76,6 +81,7 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                     scheduledDueDate: dueDate,
                     receivedAt: new Date().toISOString(),
                     amount: { principal, interest, total: dueAmount, currency: 'USD' },
+                    fundingStatus: 'PRE_FUNDING',
                     statusAfter: 'ANCHORED',
                     anchoredTxHash: anchorResult.hash
                 };
@@ -116,14 +122,15 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                 setTxHash(paymentTxResult.hash);
 
                 // 3. Save event locally
-                const principal = dueAmount * 0.6;
-                const interest = dueAmount * 0.4;
+                const principal = principalAmount;
+                const interest = interestAmount;
 
                 const paymentEvent: any = {
                     eventId: `payment_${Date.now()}`,
                     scheduledDueDate: dueDate,
                     receivedAt: new Date().toISOString(),
                     amount: { principal, interest, total: dueAmount, currency: 'USD' },
+                    fundingStatus: 'POST_FUNDING',
                     statusAfter: 'PAID',
                     anchoredTxHash: paymentTxResult.hash
                 };
@@ -188,9 +195,7 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                                     <div style={{ fontWeight: 600, color: '#374151' }}>Listing Contract: {LISTING_ADDRESS.slice(0, 20)}...</div>
                                     <div style={{ fontWeight: 600, color: '#374151', marginTop: '4px' }}>Network: Mantle Sepolia</div>
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic' }}>
-                                    💡 Payment will be automatically distributed pro-rata to all investors
-                                </div>
+
                             </div>
                         </div>
 

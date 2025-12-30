@@ -1,34 +1,26 @@
-import React, { useState } from 'react';
-import MarketplaceCard from '../components/dashboard/MarketplaceCard';
-import Button from '../components/ui/Button';
+
+import React from 'react';
+// import MarketplaceCard from '../components/dashboard/MarketplaceCard';
 import heroImage from '../assets/listing_1.jpg';
-import ContractInputForm, { type ContractData } from '../components/contract/ContractInputForm';
 import ContractDocumentList from '../components/contract/ContractDocumentList';
+import { type ContractData } from '../components/contract/ContractInputForm';
 
 const InvestorContract: React.FC = () => {
-    // Persistence Key
-    const STORAGE_KEY = 'tsf_investor_contract_page_state_v1';
-
-    // Lazy Initializers
-    const loadState = () => {
+    // Load contract data from seller's contract page
+    const loadSellerContractState = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
+            const stored = localStorage.getItem('tsf_contract_page_state_v2');
             return stored ? JSON.parse(stored) : null;
         } catch (e) {
-            console.error("Failed to load contract state", e);
+            console.error("Failed to load seller contract state", e);
             return null;
         }
     };
 
-    const savedState = loadState();
+    const sellerContractState = loadSellerContractState();
 
-    // UI State
-    const [step, setStep] = useState<'input' | 'preview'>(savedState?.step || 'input');
-    const [showForm, setShowForm] = useState(savedState?.showForm || false);
-    const [isCompleted, setIsCompleted] = useState(savedState?.isCompleted || false);
-
-    // Form State
-    const [contractData, setContractData] = useState<ContractData>(savedState?.contractData || {
+    // Contract Data - Use seller's contract data
+    const contractData: ContractData = sellerContractState?.contractData || {
         buyer: null,
         price: '475,000',
         downPaymentPercent: '30',
@@ -44,23 +36,11 @@ const InvestorContract: React.FC = () => {
         prepaymentAllowed: 'Yes',
         prepaymentPenalty: false,
         confirmed: false
-    });
+    };
 
-    // Success State Persistence
-    const [completionData, setCompletionData] = useState<any>(savedState?.completionData || null);
-
-    // Save State Effect
-    React.useEffect(() => {
-        const stateToSave = {
-            step,
-            showForm,
-            isCompleted,
-            contractData,
-            completionData
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-    }, [step, showForm, isCompleted, contractData, completionData]);
-
+    // Success State - Use seller's completion data
+    const completionData = sellerContractState?.completionData || null;
+    const isCompleted = sellerContractState?.isCompleted || false;
 
     // Derived Calculations
     const priceNum = parseInt(contractData.price.replace(/,/g, '')) || 0;
@@ -102,149 +82,135 @@ const InvestorContract: React.FC = () => {
     };
     const riskCategory = getRiskCategory();
 
-    const handleGenerate = () => {
-        setStep('preview');
-    };
-
-    const handleComplete = (data: any) => {
-        setIsCompleted(true);
-        setCompletionData(data);
-    };
-
-    const handleNewContract = () => {
-        // Reset for new contract
-        const initialData: ContractData = {
-            buyer: null,
-            price: '475,000',
-            downPaymentPercent: '30',
-            closingDate: '',
-            interestRate: '5.5',
-            term: '30',
-            termUnit: 'years',
-            paymentStructure: 'Fully Amortized',
-            balloonTerm: '',
-            securityInstrument: 'Deed of Trust',
-            lienPosition: '1st',
-            gracePeriod: '15',
-            prepaymentAllowed: 'Yes',
-            prepaymentPenalty: false,
-            confirmed: false
-        };
-
-        setContractData(initialData);
-        setStep('input');
-        setIsCompleted(false);
-        setCompletionData(null);
-        setShowForm(true);
-
-        // Explicitly clear/overwrite storage right away to avoid race conditions
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            step: 'input',
-            showForm: true,
-            isCompleted: false,
-            contractData: initialData,
-            completionData: null
-        }));
+    // No-op handlers for read-only view
+    const handleComplete = () => {
+        // Read-only - no action needed
     };
 
     const handleClose = () => {
-        setShowForm(false);
-        setStep('input');
-        setIsCompleted(false);
+        // Read-only - no action needed
     };
 
     return (
-        <div className="container" style={{ padding: '32px 0' }}>
+        <div className="container" style={{ padding: '32px 0', backgroundColor: '#0f172a', minHeight: '100vh' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '48px', alignItems: 'start' }}>
 
-                {/* Left Column: Listing Card & Action */}
+                {/* Left Column: Listing Card */}
                 <div>
-                    <div style={{ marginBottom: '24px' }}>
-                        <MarketplaceCard
-                            address="5931 Abernathy Dr, Los Angeles, CA 90045"
-                            price={475000}
-                            specs={{
-                                dp: 45000,
-                                term: 30,
-                                interest: 6,
-                                beds: 3,
-                                baths: 2
-                            }}
-                            sqft={1982}
-                            image={heroImage}
-                            tier={riskCategory || 'Tier A'}
-                            negotiable={true}
-                            showBookmark={false}
-                            showPricePerSqft={false}
-                        />
-                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{
+                            border: '1px solid #334155',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            backgroundColor: '#1e293b',
+                        }}>
+                            {/* Image */}
+                            <div style={{ height: '220px', position: 'relative', backgroundColor: '#f3f4f6' }}>
+                                <img src={heroImage} alt="Property" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px' }}>
+                                    {[1, 2, 3].map(dot => (
+                                        <div key={dot} style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dot === 1 ? 'white' : 'rgba(255,255,255,0.5)' }} />
+                                    ))}
+                                </div>
+                            </div>
 
-                    <Button
-                        onClick={isCompleted ? handleNewContract : () => setShowForm(true)}
-                        disabled={showForm && !isCompleted}
-                        style={{
-                            width: '100%',
-                            height: '48px',
-                            fontSize: '15px',
-                            fontWeight: 600,
-                            borderRadius: '8px',
-                            backgroundColor: (showForm && !isCompleted) ? '#f3f4f6' : '#000',
-                            color: (showForm && !isCompleted) ? '#9ca3af' : 'white',
-                            cursor: (showForm && !isCompleted) ? 'default' : 'pointer',
-                            border: (showForm && !isCompleted) ? '1px solid #e5e7eb' : 'none'
-                        }}
-                    >
-                        {isCompleted ? "New Contract" : "Build Contract"}
-                    </Button>
+                            {/* Details */}
+                            <div style={{ padding: '20px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#f1f5f9' }}>
+                                        $500,000
+                                    </div>
+                                    <span style={{
+                                        fontSize: '13px', fontWeight: 700, color: '#dc2626',
+                                        backgroundColor: '#fee2e2', padding: '4px 8px', borderRadius: '4px'
+                                    }}>
+                                        D-30
+                                    </span>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div style={{ position: 'relative', height: '8px', backgroundColor: '#334155', borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
+                                    <div style={{
+                                        position: 'absolute', left: 0, top: 0, bottom: 0,
+                                        width: '100%',
+                                        backgroundColor: '#7c3aed',
+                                        borderRadius: '4px'
+                                    }} />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-start', fontSize: '13px', fontWeight: 600, color: '#e2e8f0', marginBottom: '16px', marginTop: '-12px' }}>
+                                    <span>Funded 100%</span>
+                                </div>
+
+                                {/* Stats Grid */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                                    <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Monthly Payment</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>$6,018</div>
+                                    </div>
+                                    <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Remaining Term</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>120m</div>
+                                    </div>
+                                    <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>LTV</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>43%</div>
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '16px' }}>
+                                    5931 Abernathy Dr, Los Angeles, CA 90045
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right Column: Contract Workflow */}
-                {showForm && (
+                {/* Right Column: Contract Documents (Read-Only) */}
+                {isCompleted && (
                     <div style={{
-                        border: '1px solid #e5e7eb',
+                        border: '1px solid #334155',
                         borderRadius: '24px',
                         padding: '32px',
-                        backgroundColor: 'white',
+                        backgroundColor: '#1e293b',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}>
-                        {step === 'input' ? (
-                            <ContractInputForm
-                                data={contractData}
-                                onChange={setContractData}
-                                onGenerate={handleGenerate}
-                                calculated={{ monthlyPayment, totalRepayment, contractFee }}
-                                onClose={handleClose}
-                            />
-                        ) : (
-                            <ContractDocumentList
-                                onComplete={handleComplete}
-                                summary={{
-                                    monthlyPayment,
-                                    totalRepayment,
-                                    contractFee,
-                                    price: priceNum,
-                                    downPayment: downPaymentAmount,
-                                    loanAmount: loanAmount
-                                }}
-                                onClose={handleClose}
-                                data={contractData}
-                                initialCompletionData={completionData}
-                            />
-                        )}
+                        <ContractDocumentList
+                            onComplete={handleComplete}
+                            summary={{
+                                monthlyPayment,
+                                totalRepayment,
+                                contractFee,
+                                price: priceNum,
+                                downPayment: downPaymentAmount,
+                                loanAmount: loanAmount
+                            }}
+                            onClose={handleClose}
+                            data={contractData}
+                            initialCompletionData={completionData}
+                            theme="dark"
+                            showTokenizedNote={true}
+                        />
+                    </div>
+                )}
+
+                {!isCompleted && (
+                    <div style={{
+                        border: '1px solid #334155',
+                        borderRadius: '24px',
+                        padding: '48px',
+                        backgroundColor: '#1e293b',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        textAlign: 'center'
+                    }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f1f5f9', marginBottom: '12px' }}>
+                            No Contract Available
+                        </h2>
+                        <p style={{ fontSize: '14px', color: '#94a3b8' }}>
+                            The seller has not completed the contract yet.
+                        </p>
                     </div>
                 )}
             </div>
-            {/* Yellow decoration circle */}
-            <div style={{
-                position: 'fixed',
-                bottom: '80px',
-                right: '80px',
-                width: '120px',
-                height: '120px',
-                backgroundColor: '#fbbf24',
-                borderRadius: '50%',
-                zIndex: -1
-            }}></div>
         </div>
     );
 };

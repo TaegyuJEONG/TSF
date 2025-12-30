@@ -28,6 +28,12 @@ const TopBar: React.FC = () => {
     const handleProfileSelect = (role: 'owner' | 'buyer') => {
         setUserRole(role);
         setDropdownOpen(false);
+        // Navigate to appropriate dashboard
+        if (role === 'owner') {
+            navigate('/listed-home');
+        } else {
+            navigate('/buyer/visit-requests');
+        }
     };
 
     const handleDisconnect = () => {
@@ -85,7 +91,7 @@ const TopBar: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
                 <div
                     style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', cursor: 'pointer', color: isInvestorRoute ? '#f1f5f9' : '#111827' }}
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/marketplace')}
                 >
                     TSF
                 </div>
@@ -254,7 +260,8 @@ const TopBar: React.FC = () => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '12px',
-                                            backgroundColor: userRole === 'buyer' ? '#f3f4f6' : 'transparent'
+                                            backgroundColor: userRole === 'buyer' ? '#f3f4f6' : 'transparent',
+                                            marginBottom: '8px'
                                         }}
                                     >
                                         <img
@@ -266,6 +273,34 @@ const TopBar: React.FC = () => {
                                             <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>{buyerProfile.name}</span>
                                             <span style={{ fontSize: '11px', color: '#6b7280' }}>{buyerProfile.roleLabel}</span>
                                         </div>
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div style={{ borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+                                    {/* Create New Account Button */}
+                                    <div
+                                        onClick={() => {
+                                            setDropdownOpen(false);
+                                            navigate('/select-role');
+                                        }}
+                                        style={{
+                                            padding: '10px 12px',
+                                            cursor: 'pointer',
+                                            borderRadius: '6px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: '#111827',
+                                            color: 'white',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1f2937'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#111827'}
+                                    >
+                                        Create New Account
                                     </div>
                                 </>
                             )}

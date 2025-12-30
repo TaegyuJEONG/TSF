@@ -4,7 +4,7 @@ import TopBar from '../components/layout/TopBar';
 import { ethers } from 'ethers';
 import ListingABI from '../abis/Listing.json';
 import heroImage from '../assets/listing_1.jpg';
-import image2 from '../assets/listing_2.jpg';
+import image2 from '../assets/investor_listing_2.jpg';
 import image3 from '../assets/listing_3.jpg';
 
 const InvestorMarketplace: React.FC = () => {
@@ -44,31 +44,35 @@ const InvestorMarketplace: React.FC = () => {
         {
             id: latestNoteId,
             address: '5931 Abernathy Dr, Los Angeles, CA 90045',
-            price: 450000,
+            price: 500000,
             yield: 15.8,
-            ltv: 44,
-            available: 107000000, // using 107m representation
+            ltv: 43,
+            available: 107000000,
             progress: latestNoteFunded,
             daysLeft: 30,
             image: heroImage,
             tier: 'Tier A',
+            monthlyPayment: 6018,
+            remainingTerm: 120,
         },
         {
             id: 2,
             address: '2845 Rolling Hills, Sherman Oaks, CA 91403',
-            price: 455000,
+            price: 920000,
             yield: 15.8,
-            ltv: 44,
-            available: 107000000,
+            ltv: 65,
+            available: 211600,
             progress: 10,
             daysLeft: 17,
             image: image2,
             tier: 'Tier B',
+            monthlyPayment: 7600,
+            remainingTerm: 211,
         },
         {
             id: 3,
             address: '1029 Vista Del Mar, Santa Monica, CA 90401',
-            price: 455000,
+            price: 200000,
             yield: 15.8,
             ltv: 44,
             available: 107000000,
@@ -77,6 +81,8 @@ const InvestorMarketplace: React.FC = () => {
             daysLeft: 5,
             image: image3,
             tier: 'Tier C',
+            monthlyPayment: 2500,
+            remainingTerm: 100,
         },
     ];
 
@@ -131,15 +137,6 @@ const InvestorMarketplace: React.FC = () => {
                                         </span>
                                     </div>
                                 )}
-                                <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px' }}>
-                                    <span style={{
-                                        backgroundColor: listing.tier === 'Tier A' ? '#dcfce7' : listing.tier === 'Tier B' ? '#fef3c7' : '#fee2e2',
-                                        color: listing.tier === 'Tier A' ? '#166534' : listing.tier === 'Tier B' ? '#b45309' : '#991b1b',
-                                        padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600
-                                    }}>
-                                        {listing.tier}
-                                    </span>
-                                </div>
                                 <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px' }}>
                                     {[1, 2, 3].map(dot => (
                                         <div key={dot} style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dot === 1 ? 'white' : 'rgba(255,255,255,0.5)' }} />
@@ -178,11 +175,11 @@ const InvestorMarketplace: React.FC = () => {
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                                     <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                                         <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Monthly Payment</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>$6,000</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>${listing.monthlyPayment?.toLocaleString() || '6,000'}</div>
                                     </div>
                                     <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                                         <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Remaining Term</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>107m</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#e2e8f0' }}>{listing.remainingTerm || 107}m</div>
                                     </div>
                                     <div style={{ backgroundColor: '#334155', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                                         <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>LTV</div>

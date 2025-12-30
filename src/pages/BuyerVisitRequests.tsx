@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import BuyerProfileCard from '../components/dashboard/BuyerProfileCard';
+import MarketplaceCard from '../components/dashboard/MarketplaceCard';
+import listing1Image from '../assets/listing_1.jpg';
 import VisitRequestSchedule from '../components/dashboard/VisitRequestSchedule';
 import VisitAcceptanceModal from '../components/dashboard/VisitAcceptanceModal';
 
@@ -7,27 +8,20 @@ const BuyerVisitRequests: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [acceptedSlot, setAcceptedSlot] = useState<{ date: string; time: string; ampm: string } | null>(null);
 
-    // Should this be the "Seller" viewing the Buyer? 
-    // Wait, the original page "VisitRequests" was for the SELLER seeing requests FROM Buyers.
-    // If this is the BUYER dashboard, they should see Status of their requests? 
-    // Or is this a mirror where the Buyer acts as a "Seller" to themselves?
-    // Based on "Buyer Dashboard" usually implies seeing what *I* asked for.
-    // HOWEVER, the user asked to "Clone" the pages. 
-    // Let's stick to the visual clone first. If logic needs inversion (Buyer seeing their outgoing requests), 
-    // that might be a separate step. But `VisitRequests.tsx` shows *Incoming* requests.
-    // Use Case: Maybe the Buyer is also selling? Or maybe just re-using the UI for "Scheduled Visits".
-    // Let's clone exact UI first as requested.
+    const listingData = {
+        image: listing1Image,
+        price: 1200000,
+        address: '5931 Abernathy Dr, Los Angeles, CA 90045',
+        sqft: 5922,
+        specs: { dp: 360000, term: 240, interest: 6, beds: 6, baths: 5 },
+        tier: 'Tier A',
+        negotiable: true,
+    };
 
-    const buyerData = {
-        name: "Michael Johnson (Owner)", // Inverted context? Or just dummy. Let's keep dummy or set to current user properly later.
-        employment: "Self-employed",
-        income: "$12,500/mo",
-        dti: "22%",
-        creditGrade: "A (760)",
-        downPayment: "N/A",
-        pti: "N/A",
-        riskGrade: "Low risk",
-        evaluationDate: "10-Dec-2025"
+    const ownerContact = {
+        name: "Michael Johnson",
+        email: "michael.j@example.com",
+        phone: "(555) 123-4567"
     };
 
     const visitorContact = {
@@ -51,12 +45,26 @@ const BuyerVisitRequests: React.FC = () => {
     return (
         <div className="container" style={{ padding: '32px 0' }}>
             <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>My Scheduled Visits</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '32px', alignItems: 'start' }}>
-                <BuyerProfileCard data={buyerData} /> {/* Reusing component, maybe rename purely visual? */}
+            <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '32px', alignItems: 'start' }}>
+                <MarketplaceCard
+                    image={listingData.image}
+                    price={listingData.price}
+                    sqft={listingData.sqft}
+                    address={listingData.address}
+                    specs={listingData.specs}
+                    tier={listingData.tier}
+                    negotiable={listingData.negotiable}
+                    isUserListing={true}
+                    showBookmark={false}
+                    showPricePerSqft={false}
+                />
                 <VisitRequestSchedule
                     slots={requestSlots}
                     message={requestMessage}
                     onAccept={handleAccept}
+                    viewMode="buyer"
+                    confirmedSlotIndex={0}
+                    ownerContact={ownerContact}
                 />
             </div>
 

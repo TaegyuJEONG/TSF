@@ -9,14 +9,14 @@ const ProfileSummary: React.FC = () => {
     // Mock Data matching the screenshot but structured for the new UI
     const profileData = {
         name: "Chris R.",
-        employment: "Stable (3 years, full-time)",
-        income: "$6,200/mo",
-        dti: "38%",
-        creditGrade: "B+ (660 equivalent)",
-        downPayment: "$35,000 (12%)",
+        employment: "Stable (12 years, full-time)",
+        income: "$20,000/mo",
+        dti: "25%",
+        creditGrade: "A (760 equivalent)",
+        downPayment: "$360,000 (30%)",
         pti: "28%",
-        riskGrade: "Tier B",
-        evaluationDate: "10-Dec-2025"
+        riskGrade: "Tier A",
+        evaluationDate: "29-Dec-2025"
     };
 
     const LabelValue = ({ label, value, icon: Icon }: { label: string, value: string, icon: any }) => (
@@ -91,7 +91,7 @@ const ProfileSummary: React.FC = () => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 16px' }}>
                         <LabelValue label="Monthly Income" value={profileData.income} icon={DollarSign} />
-                        <LabelValue label="Employment" value="Stable (3 yrs)" icon={Briefcase} />
+                        <LabelValue label="Employment" value="Stable (12 yrs)" icon={Briefcase} />
                         <LabelValue label="Credit Score" value={profileData.creditGrade} icon={Shield} />
                         <LabelValue label="Down Payment" value={profileData.downPayment} icon={PieChart} />
                         <LabelValue label="DTI Ratio" value={profileData.dti} icon={Percent} />

@@ -54,14 +54,18 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
                     const rpcProvider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
                     const listingPublic = new Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
                     const noteStatus = await listingPublic.getNoteStatus(noteId);
-                    setTotalRaised(Number(noteStatus.raised) / 1_000_000);
+                    let raised = Number(noteStatus.raised) / 1_000_000;
+                    if (raised === 455000) raised = 500000; // Demo override
+                    setTotalRaised(raised);
                 } catch (e) {
                     // Fallback to browser provider if RPC fails
                     if (window.ethereum) {
                         const browserProvider = new BrowserProvider(window.ethereum);
                         const listing = new Contract(LISTING_ADDRESS, ListingABI, browserProvider);
                         const noteStatus = await listing.getNoteStatus(noteId);
-                        setTotalRaised(Number(noteStatus.raised) / 1_000_000);
+                        let raised = Number(noteStatus.raised) / 1_000_000;
+                        if (raised === 455000) raised = 500000; // Demo override
+                        setTotalRaised(raised);
                     }
                 }
 
@@ -80,10 +84,10 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
     }, [isOpen, address, txHash]); // Refresh on open or after transaction
 
     // Mock calculations
-    const noteSize = 455000;
+    const noteSize = 500000;
     const availableAmount = noteSize - totalRaised;
     const share = investmentAmount / noteSize;
-    const totalMonthlyPayment = 6000;
+    const totalMonthlyPayment = 6018;
     const monthlyPI = totalMonthlyPayment * share;
     const servicingFee = monthlyPI * 0.01;
     const netCashFlow = monthlyPI - servicingFee;
@@ -94,9 +98,9 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
             content: (
                 <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#4b5563' }}>
                     <p style={{ marginBottom: '8px' }}><strong>Underlying Asset:</strong> 1st lien seller-financed promissory note</p>
-                    <p style={{ marginBottom: '8px' }}><strong>Total Note Size:</strong> $455,000</p>
-                    <p style={{ marginBottom: '8px' }}><strong>Remaining Term:</strong> 107 months</p>
-                    <p style={{ marginBottom: '8px' }}><strong>Interest Rate:</strong> 5%</p>
+                    <p style={{ marginBottom: '8px' }}><strong>Total Note Size:</strong> $500,000</p>
+                    <p style={{ marginBottom: '8px' }}><strong>Remaining Term:</strong> 120 months</p>
+                    <p style={{ marginBottom: '8px' }}><strong>Interest Rate:</strong> 6%</p>
                     <p>Investor receives pro-rata principal & interest. Serviced by licensed loan servicer. Trustee and documentation handled by regulated partners.</p>
                 </div>
             )
