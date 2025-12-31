@@ -88,7 +88,7 @@ const InvestorDashboard: React.FC = () => {
     const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
     // Mantle Sepolia Contract Address
-    const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
+    const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
 
     // Data: Fetch 'raised' from contract with demo override
     React.useEffect(() => {
@@ -98,7 +98,6 @@ const InvestorDashboard: React.FC = () => {
                 const listingPublic = new ethers.Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
                 const noteStatus = await listingPublic.getNoteStatus(noteId);
                 let raised = Number(noteStatus.raised) / 1_000_000;
-                if (raised === 455000) raised = 500000; // Demo override
                 setInvestedAmount(raised);
             } catch (e) {
                 console.error("Error fetching raised from RPC provider:", e);
@@ -108,7 +107,6 @@ const InvestorDashboard: React.FC = () => {
                         const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, browserProvider);
                         const noteStatus = await listing.getNoteStatus(noteId);
                         let raised = Number(noteStatus.raised) / 1_000_000;
-                        if (raised === 455000) raised = 500000;
                         setInvestedAmount(raised);
                     } catch (err) {
                         console.error("Browser provider also failed:", err);

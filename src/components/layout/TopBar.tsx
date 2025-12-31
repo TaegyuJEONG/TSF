@@ -282,7 +282,7 @@ const TopBar: React.FC = () => {
                                     <div
                                         onClick={() => {
                                             setDropdownOpen(false);
-                                            navigate('/select-role');
+                                            navigate('/');
                                         }}
                                         style={{
                                             padding: '10px 12px',

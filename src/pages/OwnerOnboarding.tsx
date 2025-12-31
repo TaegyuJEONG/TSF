@@ -19,6 +19,29 @@ const OwnerOnboarding: React.FC = () => {
         externalLink: '',
         description: ''
     });
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled) {
+                setFormData({
+                    address: '5931 Abernathy Dr, Los Angeles, CA 90045',
+                    propertyType: 'Single Family Home',
+                    yearBuilt: '2015',
+                    bedrooms: '6',
+                    surfaceArea: '5922',
+                    bathrooms: '5',
+                    externalLink: '',
+                    description: 'This stunning 6 bedroom, 5 bath estate offers an expansive open floor plan with soaring ceilings and abundant natural light throughout its 5,922 square feet. The gourmet kitchen features high-end appliances and opens to a spacious family room, perfect for entertaining.'
+                });
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -35,7 +58,10 @@ const OwnerOnboarding: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/select-role')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/select-role');
+                    }}
                     style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--color-text-main)', fontWeight: 500, cursor: 'pointer', padding: 0 }}
                 >
                     <ChevronLeft size={18} /> Back to role selection
@@ -199,7 +225,10 @@ const OwnerOnboarding: React.FC = () => {
                 <div style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
                     <Button
                         variant="outline"
-                        onClick={() => navigate('/select-role')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/select-role');
+                        }}
                         style={{ flex: 1, justifyContent: 'center' }}
                     >
                         Back

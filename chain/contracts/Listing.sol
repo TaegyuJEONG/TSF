@@ -154,6 +154,7 @@ contract Listing is ReentrancyGuard {
         // 5. Check if goal reached
         if (note.raised >= note.goal) {
             note.closed = true;
+            token.safeTransfer(spv, note.raised); // Auto-transfer funds to SPV
             emit FundingClosed(noteId);
         }
     }

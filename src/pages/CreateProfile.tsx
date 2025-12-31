@@ -9,7 +9,52 @@ const CreateProfile: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const role = searchParams.get('role') || 'buyer'; // default to buyer if not specified
+
+    // State for form fields
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        phone: ''
+    });
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Initial photo state should be null, will be filled on click
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+    // Pre-fill data configuration
+    const demoValues = {
+        buyer: {
+            fullName: 'Chris Richardson',
+            email: 'chris.r@example.com',
+            phone: '(555) 123-4567',
+            photo: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80'
+        },
+        owner: {
+            fullName: 'Michael Johnson',
+            email: 'michael.j@example.com',
+            phone: '(555) 123-4567',
+            photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80'
+        }
+    };
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled) {
+                const data = role === 'owner' ? demoValues.owner : demoValues.buyer;
+                setFormData({
+                    fullName: data.fullName,
+                    email: data.email,
+                    phone: data.phone
+                });
+                setPhotoPreview(data.photo);
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled, role]);
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -17,6 +62,10 @@ const CreateProfile: React.FC = () => {
             const objectUrl = URL.createObjectURL(file);
             setPhotoPreview(objectUrl);
         }
+    };
+
+    const handleInputChange = (field: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({ ...prev, [field]: e.target.value }));
     };
 
     const handleContinue = (e: React.FormEvent) => {
@@ -35,7 +84,10 @@ const CreateProfile: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '480px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/select-role')}
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent magic fill if clicking back
+                        navigate('/select-role');
+                    }}
                     style={{
                         background: 'none',
                         border: 'none',
@@ -57,9 +109,26 @@ const CreateProfile: React.FC = () => {
             <Card style={{ maxWidth: '480px', margin: '0 auto', width: '100%' }} padding="32px">
                 <form onSubmit={handleContinue}>
 
-                    <Input label="Full Name" placeholder="" />
-                    <Input label="Email" type="email" placeholder="" />
-                    <Input label="Phone Number" type="tel" placeholder="" />
+                    <Input
+                        label="Full Name"
+                        placeholder="Type your name"
+                        value={formData.fullName}
+                        onChange={handleInputChange('fullName')}
+                    />
+                    <Input
+                        label="Email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={formData.email}
+                        onChange={handleInputChange('email')}
+                    />
+                    <Input
+                        label="Phone Number"
+                        type="tel"
+                        placeholder="(555) 000-0000"
+                        value={formData.phone}
+                        onChange={handleInputChange('phone')}
+                    />
 
                     {/* Custom Photo Upload Field */}
                     <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '6px' }}>

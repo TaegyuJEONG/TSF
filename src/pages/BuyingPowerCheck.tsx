@@ -7,7 +7,37 @@ import { useNavigate } from 'react-router-dom';
 
 const BuyingPowerCheck: React.FC = () => {
     const navigate = useNavigate();
+
+    // State for form fields
+    const [formData, setFormData] = useState({
+        dob: '',
+        address: '',
+        ssn: ''
+    });
     const [agreed, setAgreed] = useState(false);
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled) {
+                setFormData({
+                    dob: '1995-05-15', // Approx 30 years old
+                    address: '1234 Market St, San Francisco, CA 94103', // California address
+                    ssn: '123-45-6789'
+                });
+                setAgreed(true); // Auto-check the consent box
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled]);
+
+    const handleInputChange = (field: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({ ...prev, [field]: e.target.value }));
+    };
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface-gray)', padding: '24px', display: 'flex', flexDirection: 'column' }}>
@@ -15,7 +45,10 @@ const BuyingPowerCheck: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '480px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/select-role')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/select-role');
+                    }}
                     style={{
                         background: 'none',
                         border: 'none',
@@ -52,10 +85,21 @@ const BuyingPowerCheck: React.FC = () => {
                 <form onSubmit={(e) => { e.preventDefault(); navigate('/income-verification'); }}>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: '8px' }}>
-                        <Input label="Date of Birth" placeholder="MM / DD / YYYY" type="date" />
+                        <Input
+                            label="Date of Birth"
+                            placeholder="MM / DD / YYYY"
+                            type="date"
+                            value={formData.dob}
+                            onChange={handleInputChange('dob')}
+                        />
                     </div>
 
-                    <Input label="Current Address" placeholder="123 Main St, City, State ZIP" />
+                    <Input
+                        label="Current Address"
+                        placeholder="123 Main St, City, State ZIP"
+                        value={formData.address}
+                        onChange={handleInputChange('address')}
+                    />
 
                     <div style={{ position: 'relative' }}>
                         <Input
@@ -63,6 +107,8 @@ const BuyingPowerCheck: React.FC = () => {
                             placeholder="XXX - XX - XXXX"
                             type="password"
                             helperText="Your information is encrypted with bank-level security."
+                            value={formData.ssn}
+                            onChange={handleInputChange('ssn')}
                         />
                         <Lock size={14} style={{ position: 'absolute', right: '12px', top: '38px', color: 'var(--color-text-muted)' }} />
                     </div>

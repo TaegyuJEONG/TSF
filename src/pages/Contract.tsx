@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MarketplaceCard from '../components/dashboard/MarketplaceCard';
 import Button from '../components/ui/Button';
 import heroImage from '../assets/listing_1.jpg';
@@ -28,13 +28,14 @@ const Contract: React.FC = () => {
     const [isCompleted, setIsCompleted] = useState(savedState?.isCompleted || false);
 
     // Form State
-    const [contractData, setContractData] = useState<ContractData>(savedState?.contractData || {
+    // Initial Empty Data (Placeholders)
+    const emptyData: ContractData = {
         buyer: null,
-        price: '1,200,000',
-        downPaymentPercent: '30',
+        price: '',
+        downPaymentPercent: '',
         closingDate: '',
-        interestRate: '6.0',
-        term: '240',
+        interestRate: '',
+        term: '',
         termUnit: 'months',
         paymentStructure: 'Fully Amortized',
         balloonTerm: '',
@@ -44,7 +45,54 @@ const Contract: React.FC = () => {
         prepaymentAllowed: 'Yes',
         prepaymentPenalty: false,
         confirmed: false
-    });
+    };
+
+    // Form State
+    const [contractData, setContractData] = useState<ContractData>(savedState?.contractData || emptyData);
+
+    // Autofill on Click Effect
+    useEffect(() => {
+        // Only run if form is shown and price is empty
+        if (!showForm || contractData.price) return;
+
+        const handleGlobalClick = () => {
+            const today = new Date().toISOString().split('T')[0];
+
+            setContractData({
+                buyer: {
+                    id: '5',
+                    name: 'Chris R.',
+                    email: 'chris.r@example.com',
+                    avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80'
+                },
+                price: '1,200,000',
+                downPaymentPercent: '30',
+                closingDate: today,
+                interestRate: '6.0',
+                term: '240',
+                termUnit: 'months',
+                paymentStructure: 'Fully Amortized',
+                balloonTerm: '',
+                securityInstrument: 'Deed of Trust',
+                lienPosition: '1st',
+                gracePeriod: '15',
+                prepaymentAllowed: 'Yes',
+                prepaymentPenalty: false,
+                confirmed: true
+            });
+        };
+
+        // Delay adding the listener slightly to avoid the "Build Contract" click triggering it immediately
+        const timer = setTimeout(() => {
+            window.addEventListener('click', handleGlobalClick);
+        }, 100);
+
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('click', handleGlobalClick);
+        };
+    }, [showForm, contractData.price]);
+
 
     // Success State Persistence
     const [completionData, setCompletionData] = useState<any>(savedState?.completionData || null);
@@ -63,7 +111,7 @@ const Contract: React.FC = () => {
 
 
     // Derived Calculations
-    const priceNum = parseInt(contractData.price.replace(/,/g, '')) || 0;
+    const priceNum = parseInt((contractData.price || '0').replace(/,/g, '')) || 0;
     const downPaymentNum = parseFloat(contractData.downPaymentPercent) || 0;
     const rateNum = parseFloat(contractData.interestRate) || 0;
 
@@ -114,25 +162,7 @@ const Contract: React.FC = () => {
 
     const handleNewContract = () => {
         // Reset for new contract
-        const initialData: ContractData = {
-            buyer: null,
-            price: '1,200,000',
-            downPaymentPercent: '30',
-            closingDate: '',
-            interestRate: '6.0',
-            term: '240',
-            termUnit: 'months',
-            paymentStructure: 'Fully Amortized',
-            balloonTerm: '',
-            securityInstrument: 'Deed of Trust',
-            lienPosition: '1st',
-            gracePeriod: '15',
-            prepaymentAllowed: 'Yes',
-            prepaymentPenalty: false,
-            confirmed: false
-        };
-
-        setContractData(initialData);
+        setContractData(emptyData);
         setStep('input');
         setIsCompleted(false);
         setCompletionData(null);
@@ -147,7 +177,7 @@ const Contract: React.FC = () => {
             step: 'input',
             showForm: true,
             isCompleted: false,
-            contractData: initialData,
+            contractData: emptyData,
             completionData: null
         }));
     };

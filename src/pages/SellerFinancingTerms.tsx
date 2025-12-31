@@ -20,6 +20,24 @@ const SellerFinancingTerms: React.FC = () => {
     const [termMonths, setTermMonths] = useState<string>('');
     const [isNegotiable, setIsNegotiable] = useState(false);
     const [showRiskTooltip, setShowRiskTooltip] = useState(false);
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled) {
+                setPrice('1,200,000');
+                setDownPaymentPercent('30');
+                setInterestRate('6');
+                setTermMonths('240');
+                setIsNegotiable(true);
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled]);
 
     // Derived State
     const priceNum = parseInt(price.replace(/,/g, '')) || 0;
@@ -150,7 +168,10 @@ const SellerFinancingTerms: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/property-photos')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/property-photos');
+                    }}
                     style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--color-text-main)', fontWeight: 500, cursor: 'pointer', padding: 0 }}
                 >
                     <ChevronLeft size={18} /> Back to photos
@@ -309,10 +330,16 @@ const SellerFinancingTerms: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        <Button variant="outline" onClick={() => navigate('/property-photos')} style={{ flex: 1 }}>
+                        <Button variant="outline" onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/property-photos');
+                        }} style={{ flex: 1 }}>
                             Back
                         </Button>
-                        <Button onClick={handlePreview} style={{ flex: 1, backgroundColor: '#000' }}>
+                        <Button onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreview();
+                        }} style={{ flex: 1, backgroundColor: '#000' }}>
                             Preview
                         </Button>
                     </div>

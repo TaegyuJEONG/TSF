@@ -20,7 +20,7 @@ interface InvestModalProps {
 }
 
 // Mantle Sepolia Contract Addresses
-const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
+const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
 const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
@@ -41,8 +41,8 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
     // State for Dynamic Data
     const [myInvestment, setMyInvestment] = useState<number>(0);
     const [totalRaised, setTotalRaised] = useState<number>(0);
+    const [dynamicNoteSize, setDynamicNoteSize] = useState<number>(500000);
 
-    // Fetch Contract Data
     // Fetch Contract Data
     React.useEffect(() => {
         if (!isOpen) return;
@@ -54,8 +54,10 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
                     const rpcProvider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
                     const listingPublic = new Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
                     const noteStatus = await listingPublic.getNoteStatus(noteId);
-                    let raised = Number(noteStatus.raised) / 1_000_000;
-                    if (raised === 455000) raised = 500000; // Demo override
+
+                    const goal = Number(noteStatus.goal) / 1_000_000;
+                    const raised = Number(noteStatus.raised) / 1_000_000;
+                    setDynamicNoteSize(goal);
                     setTotalRaised(raised);
                 } catch (e) {
                     // Fallback to browser provider if RPC fails
@@ -63,8 +65,10 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
                         const browserProvider = new BrowserProvider(window.ethereum);
                         const listing = new Contract(LISTING_ADDRESS, ListingABI, browserProvider);
                         const noteStatus = await listing.getNoteStatus(noteId);
-                        let raised = Number(noteStatus.raised) / 1_000_000;
-                        if (raised === 455000) raised = 500000; // Demo override
+
+                        const goal = Number(noteStatus.goal) / 1_000_000;
+                        const raised = Number(noteStatus.raised) / 1_000_000;
+                        setDynamicNoteSize(goal);
                         setTotalRaised(raised);
                     }
                 }
@@ -84,7 +88,7 @@ const InvestModal: React.FC<InvestModalProps> = ({ isOpen, onClose, onInvest, no
     }, [isOpen, address, txHash]); // Refresh on open or after transaction
 
     // Mock calculations
-    const noteSize = 500000;
+    const noteSize = dynamicNoteSize;
     const availableAmount = noteSize - totalRaised;
     const share = investmentAmount / noteSize;
     const totalMonthlyPayment = 6018;

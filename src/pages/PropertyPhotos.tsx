@@ -5,6 +5,10 @@ import Button from '../components/ui/Button';
 import { ChevronLeft, ChevronRight, UploadCloud, X, Plus } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 
+import heroImage from '../assets/listing_1.jpg';
+import interiorImage from '../assets/listing_interior.jpg';
+import kitchenImage from '../assets/listing_kitchen.jpg';
+
 const PropertyPhotos: React.FC = () => {
     const navigate = useNavigate();
 
@@ -13,6 +17,24 @@ const PropertyPhotos: React.FC = () => {
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isSaved, setIsSaved] = useState(false);
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled && photos.length === 0) {
+                setPhotos([
+                    { id: 1, url: heroImage, title: 'Front View' },
+                    { id: 2, url: interiorImage, title: 'Living Room' },
+                    { id: 3, url: kitchenImage, title: 'Kitchen' }
+                ]);
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled, photos.length]);
 
     const handleNext = () => {
         setCurrentIndex((prev) => (prev + 1) % photos.length);
@@ -76,7 +98,10 @@ const PropertyPhotos: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '700px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/owner-verification')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/owner-verification');
+                    }}
                     style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--color-text-main)', fontWeight: 500, cursor: 'pointer', padding: 0 }}
                 >
                     <ChevronLeft size={18} /> Back
@@ -116,7 +141,10 @@ const PropertyPhotos: React.FC = () => {
                             {photos.length > 1 && (
                                 <>
                                     <button
-                                        onClick={handlePrev}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handlePrev();
+                                        }}
                                         style={{
                                             position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
                                             width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)',
@@ -127,7 +155,10 @@ const PropertyPhotos: React.FC = () => {
                                         <ChevronLeft size={20} />
                                     </button>
                                     <button
-                                        onClick={handleNext}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleNext();
+                                        }}
                                         style={{
                                             position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
                                             width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)',
@@ -225,10 +256,16 @@ const PropertyPhotos: React.FC = () => {
 
                 {/* Footer Buttons */}
                 <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                    <Button variant="outline" onClick={() => navigate('/owner-verification')}>
+                    <Button variant="outline" onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/owner-verification');
+                    }}>
                         Back
                     </Button>
-                    <Button onClick={() => navigate('/seller-financing-terms', { state: { photos } })} style={{ backgroundColor: '#000', minWidth: '140px' }}>
+                    <Button onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/seller-financing-terms', { state: { photos } });
+                    }} style={{ backgroundColor: '#000', minWidth: '140px' }}>
                         Continue
                     </Button>
                 </div>

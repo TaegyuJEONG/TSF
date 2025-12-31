@@ -50,8 +50,9 @@ function App() {
       <BrowserRouter>
         <UserRoleProvider>
           <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Dashboard />} />
+            <Route path="/" element={<SelectRole />} />
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="new-request" element={<NewRequest />} />
               <Route path="term-sheet" element={<TermSheet />} />
               <Route path="contract" element={<Contract />} />
@@ -79,7 +80,7 @@ function App() {
               <Route path="buyer/profile" element={<BuyerProfile />} />
             </Route>
             <Route path="/create-profile" element={<CreateProfile />} />
-            <Route path="/select-role" element={<SelectRole />} />
+
             <Route path="/buying-power" element={<BuyingPowerCheck />} />
             <Route path="/income-verification" element={<IncomeVerification />} />
             <Route path="/buyer-preferences" element={<BuyerPreferences />} />

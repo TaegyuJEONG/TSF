@@ -46,6 +46,7 @@ const MOCK_BUYERS: Buyer[] = [
     { id: '2', name: 'Sarah Smith', email: 'sarah.smith@example.com', avatar: 'https://i.pravatar.cc/150?u=2' },
     { id: '3', name: 'Michael Brown', email: 'michael.b@example.com', avatar: 'https://i.pravatar.cc/150?u=3' },
     { id: '4', name: 'Emily Davis', email: 'emily.davis@realestate.com', avatar: 'https://i.pravatar.cc/150?u=4' },
+    { id: '5', name: 'Chris R.', email: 'chris.r@example.com', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80' },
 ];
 
 interface ContractInputFormProps {

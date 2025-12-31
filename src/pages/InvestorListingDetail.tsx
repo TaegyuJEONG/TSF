@@ -79,9 +79,10 @@ const InvestorListingDetail: React.FC = () => {
     // State for dynamic investment data
     const [investedAmount, setInvestedAmount] = React.useState(0);
     const [refreshTrigger, setRefreshTrigger] = React.useState(0);
+    const [fundingTxHash, setFundingTxHash] = React.useState<string | null>(null);
 
     // Mantle Sepolia Contract Address
-    const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
+    const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
 
     // Load initial state mainly from Chain, fallback to local if needed or just chain
     // Data: Fetch 'raised' from contract
@@ -92,8 +93,35 @@ const InvestorListingDetail: React.FC = () => {
                 const listingPublic = new ethers.Contract(LISTING_ADDRESS, ListingABI, rpcProvider);
                 const noteStatus = await listingPublic.getNoteStatus(noteId);
                 let raised = Number(noteStatus.raised) / 1_000_000; // Convert from 6 decimals
-                if (raised === 455000) raised = 500000; // Demo override: Contract has old cap, force to new Goal
                 setInvestedAmount(raised);
+
+                // Fetch Funding TX if closed
+                if (noteStatus.closed) {
+                    try {
+                        const currentBlock = await rpcProvider.getBlockNumber();
+                        const fromBlock = Math.max(0, currentBlock - 5000);
+
+                        const filter = listingPublic.filters.FundingClosed(noteId);
+                        const events = await listingPublic.queryFilter(filter, fromBlock, 'latest');
+
+                        if (events.length > 0) {
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                            // @ts-ignore
+                            setFundingTxHash(events[0].transactionHash);
+                        } else {
+                            const investFilter = listingPublic.filters.Invested(noteId);
+                            const investEvents = await listingPublic.queryFilter(investFilter, fromBlock, 'latest');
+                            if (investEvents.length > 0) {
+                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                // @ts-ignore
+                                setFundingTxHash(investEvents[investEvents.length - 1].transactionHash);
+                            }
+                        }
+                    } catch (logErr) {
+                        console.error("Error fetching logs:", logErr);
+                    }
+                }
+
             } catch (e) {
                 console.error("Error fetching raised from RPC provider:", e);
                 // Fallback to browser provider if RPC fails
@@ -103,8 +131,17 @@ const InvestorListingDetail: React.FC = () => {
                         const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, browserProvider);
                         const noteStatus = await listing.getNoteStatus(noteId);
                         let raised = Number(noteStatus.raised) / 1_000_000; // Convert from 6 decimals
-                        if (raised === 455000) raised = 500000; // Demo override: Contract has old cap, force to new Goal
                         setInvestedAmount(raised);
+
+                        if (noteStatus.closed) {
+                            const filter = listing.filters.FundingClosed(noteId);
+                            const events = await listing.queryFilter(filter);
+                            if (events.length > 0) {
+                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                // @ts-ignore
+                                setFundingTxHash(events[0].transactionHash);
+                            }
+                        }
                     } catch (err) {
                         console.error("Browser provider also failed:", err);
                     }
@@ -122,7 +159,7 @@ const InvestorListingDetail: React.FC = () => {
         const fetchNoteMetadata = async () => {
             try {
                 const provider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
-                const listingAddress = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
+                const listingAddress = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
                 const listing = new ethers.Contract(listingAddress, ListingABI, provider);
 
                 // Call getNoteMetadata(noteId)
@@ -241,6 +278,31 @@ const InvestorListingDetail: React.FC = () => {
                         <div style={{ width: `${listing.investedPercent}%`, backgroundColor: '#7c3aed', height: '100%' }} />
                     </div>
                 </div>
+
+                {fundingTxHash && (
+                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <a
+                            href={`https://sepolia.mantlescan.xyz/tx/${fundingTxHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                fontSize: '13px',
+                                color: '#10b981',
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontWeight: 600,
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                border: '1px solid rgba(16, 185, 129, 0.2)'
+                            }}
+                        >
+                            ✓ Funds Transferred to SPV <ExternalLink size={14} />
+                        </a>
+                    </div>
+                )}
 
                 {/* Overall Assessment */}
                 <div style={{ marginBottom: '48px' }}>

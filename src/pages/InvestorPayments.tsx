@@ -7,7 +7,7 @@ import { useWallet } from '../hooks/useWallet';
 import { BrowserProvider, Contract, ethers } from 'ethers';
 import ListingABI from '../abis/Listing.json';
 
-const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
+const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
 
 interface PaymentEvent {
     receivedAt: string;
@@ -177,7 +177,7 @@ const InvestorPayments: React.FC = () => {
     // Marketplace Card Data (same as before)
     const listingData = {
         image: listing1Image,
-        price: 455000,
+        price: 500000,
         address: '5931 Abernathy Dr, Los Angeles, CA 90045',
         sqft: 1982,
         specs: { dp: 45000, term: 30, interest: 6, beds: 3, baths: 2 },

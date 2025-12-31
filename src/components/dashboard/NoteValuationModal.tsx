@@ -15,13 +15,13 @@ interface NoteValuationModalProps {
     upb: number; // Unpaid Principal Balance
 }
 
-const LISTING_ADDRESS = "0xe7eF33fB46292312C43AFef9f1a60799AEa0C91a";
+const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
 
 const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList, upb }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState<'pricing' | 'cashout' | 'processing' | 'confirmed'>('pricing');
     const [selectedPreset, setSelectedPreset] = useState<'fast' | 'market' | 'premium' | 'custom' | null>(null);
-    const [customPrice, setCustomPrice] = useState<string>(Math.round(upb * 0.92).toString());
+    const [customPrice, setCustomPrice] = useState<string>("500000");
     const [txHash, setTxHash] = useState<string>('');
 
     // Reset state when opening
@@ -38,7 +38,7 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
     // Pricing Logic (Mock) based on UPB
     const presets = {
         fast: { price: Math.round(upb * 0.88), yield: '7.1%', label: 'Sell faster' },
-        market: { price: Math.round(upb * 0.92), yield: '6.0%', label: 'Market average' },
+        market: { price: 500000, yield: '6.0%', label: 'Market average' }, // Forced for Demo consistency
         premium: { price: Math.round(upb * 0.94), yield: '5.5%', label: 'Premium' }
     };
 
@@ -98,7 +98,7 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                 anchorHashBytes32,
                 paymentRootBytes32,
                 ethers.parseUnits(currentPrice.toString(), 6),
-                ethers.parseUnits('455000', 6)
+                ethers.parseUnits(currentPrice.toString(), 6)
             ]);
 
             // 4. Call createNote (returns noteId)
@@ -112,7 +112,7 @@ const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose
                     anchorHashBytes32,
                     paymentRootBytes32,
                     ethers.parseUnits(currentPrice.toString(), 6),
-                    ethers.parseUnits('455000', 6)  // goal = $455,000 (Total Investment Needed)
+                    ethers.parseUnits(currentPrice.toString(), 6)  // goal = price (Total Investment Needed)
                 ]
             );
 

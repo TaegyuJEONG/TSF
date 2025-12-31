@@ -8,6 +8,22 @@ const IncomeVerification: React.FC = () => {
     const navigate = useNavigate();
     const [files, setFiles] = useState<{ name: string; size: string }[]>([]);
 
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (files.length === 0) {
+                setFiles([
+                    { name: 'Chase_Bank_Statement_Oct2025.pdf', size: '1.24 MB' },
+                    { name: 'Chase_Bank_Statement_Nov2025.pdf', size: '1.18 MB' },
+                    { name: 'Chase_Bank_Statement_Dec2025.pdf', size: '1.32 MB' },
+                ]);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [files]);
+
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const newFiles = Array.from(e.target.files).map(file => ({
@@ -28,7 +44,10 @@ const IncomeVerification: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '520px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/buying-power')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/buying-power');
+                    }}
                     style={{
                         background: 'none',
                         border: 'none',
@@ -114,7 +133,10 @@ const IncomeVerification: React.FC = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => removeFile(idx)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeFile(idx);
+                                    }}
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#94a3b8' }}
                                 >
                                     <X size={16} />

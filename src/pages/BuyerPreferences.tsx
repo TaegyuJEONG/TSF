@@ -15,6 +15,23 @@ const BuyerPreferences: React.FC = () => {
     const [price, setPrice] = useState('');
     const [downPayment, setDownPayment] = useState('');
     const [interestRate, setInterestRate] = useState('');
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled) {
+                setPrice('1,200,000');
+                setDownPayment('360,000');
+                setInterestRate('6');
+                setStep(2); // Reveal all steps up to interest rate
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled]);
 
     // Handlers to advance steps
     const confirmPrice = () => {
@@ -93,7 +110,10 @@ const BuyerPreferences: React.FC = () => {
 
             <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/income-verification')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/income-verification');
+                    }}
                     style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--color-text-main)', fontWeight: 500, cursor: 'pointer', padding: 0 }}
                 >
                     <ChevronLeft size={18} /> Back
@@ -108,7 +128,10 @@ const BuyerPreferences: React.FC = () => {
                     </p>
                     {step > 0 && (
                         <button
-                            onClick={handleReset}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleReset();
+                            }}
                             style={{
                                 position: 'absolute', right: 0, top: 0,
                                 background: 'none', border: 'none', cursor: 'pointer',
@@ -149,7 +172,7 @@ const BuyerPreferences: React.FC = () => {
                     {step === 0 && (
                         <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #dbeafe', display: 'flex', gap: '8px', fontSize: '13px', color: '#1e40af' }}>
                             <Info size={16} style={{ flexShrink: 0 }} />
-                            <span>Based on your income, a price range of <strong>$600k - $850k</strong> is recommended for easy approval.</span>
+                            <span>Based on your income, a price range of <strong>$1M - $1.3M</strong> is recommended for easy approval.</span>
                         </div>
                     )}
                 </div>
@@ -182,7 +205,7 @@ const BuyerPreferences: React.FC = () => {
                     {step === 1 && (
                         <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #dbeafe', display: 'flex', gap: '8px', fontSize: '13px', color: '#1e40af' }}>
                             <Info size={16} style={{ flexShrink: 0 }} />
-                            <span>For a ${price} home, a down payment of <strong>10% - 20%</strong> ($S{(parseInt(price || '0') * 0.1).toLocaleString()} - ${(parseInt(price || '0') * 0.2).toLocaleString()}) matches your credit profile.</span>
+                            <span>For a ${price} home, a down payment of <strong>20% - 30%</strong> ($S{(parseInt(price || '0') * 0.2).toLocaleString()} - ${(parseInt(price || '0') * 0.3).toLocaleString()}) matches your credit profile.</span>
                         </div>
                     )}
                 </div>

@@ -8,6 +8,27 @@ const OwnerVerification: React.FC = () => {
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [isFilled, setIsFilled] = useState(false);
+
+    // Magic fill on click
+    React.useEffect(() => {
+        const handleGlobalClick = () => {
+            if (!isFilled) {
+                // Mocking a File object for display purposes
+                const mockFile = {
+                    name: '5931_Abernathy_Dr_Tax_Bill.pdf',
+                    size: 2.4 * 1024 * 1024,
+                    type: 'application/pdf'
+                } as any;
+
+                setFile(mockFile);
+                setIsFilled(true);
+            }
+        };
+
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [isFilled]);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -39,7 +60,10 @@ const OwnerVerification: React.FC = () => {
             {/* Top Navigation */}
             <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', marginBottom: '24px' }}>
                 <button
-                    onClick={() => navigate('/owner-onboarding')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/owner-onboarding');
+                    }}
                     style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--color-text-main)', fontWeight: 500, cursor: 'pointer', padding: 0 }}
                 >
                     <ChevronLeft size={18} /> Back to details
@@ -123,7 +147,10 @@ const OwnerVerification: React.FC = () => {
                             </div>
                         </div>
                         <button
-                            onClick={() => setFile(null)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFile(null);
+                            }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', color: '#9ca3af', display: 'flex' }}
                         >
                             <X size={20} />
@@ -135,7 +162,10 @@ const OwnerVerification: React.FC = () => {
                 <div style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
                     <Button
                         variant="outline"
-                        onClick={() => navigate('/owner-onboarding')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/owner-onboarding');
+                        }}
                         style={{ flex: 1, justifyContent: 'center' }}
                     >
                         Back
