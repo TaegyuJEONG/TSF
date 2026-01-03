@@ -129,19 +129,19 @@ The demo is structured into specific role-based workflows.
     *   (Tip: To change account, you should disconnect wallet and start investor onboarding again.)
 
 ### G. Claiming (Investor)
+
 *(Please make it sure that you are Buyer-Chris R)*
-1.  **Buyer payment** tab to make a payment.
+1.  **SPV Wallet**: The SPV account needs dUSD to send buyer's payment to smart contract. **Disconnect** your current wallet, **Connect** the SPV wallet, and click **"Get Test dUSD"** to mint.
+2.  **Buyer payment** tab to make a payment.
 
 *(Please make it sure that you are Investor account)*
-2.  **Investor Payments** tab updates with claimable amount (based on ownership share).
-3.  Click **"Claim Now"** -> Receive Stablecoins -> Status updates to "Claimed".
-4.  **Verify Ledger**: Click to see ownership %, total invested, claimed P&I, and confirm transactions on **MantleScan**.
-
-
+3.  **Investor Payments** tab updates with claimable amount (based on ownership share).
+4.  Click **"Claim Now"** -> Receive Stablecoins -> Status updates to "Claimed".
+5.  **Verify Ledger**: Click to see ownership %, total invested, claimed P&I, and confirm transactions on **MantleScan**.
 
 ## Smart Contract Details (Deployed)
 
 *   **Listing Contract**: `0xA6a9B419Ae205E57c2f6D45f6289287927195068`
 *   **DemoUSD**: `0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160` (Public Mint Enabled)
 
-*(To start a fresh demo cycle: Close the 'Contract Documents' modal on the Contract page, then click 'Build Contract' again. This will generate a new agreement and mint a fresh Note on the blockchain.)*
+*(To start a fresh demo cycle: Close the 'Contract Documents' modal on the Homeowner Contract page, then click 'Build Contract' again. This will generate a new agreement and mint a fresh Note on the blockchain.)*
