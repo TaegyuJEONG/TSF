@@ -29,7 +29,7 @@ To fully test creating contracts and distributing payments, you must act as the 
 
 1.  **Clone/Download the Repository**:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/TaegyuJEONG/TSF
     cd TSF
     ```
 
