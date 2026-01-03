@@ -1,6 +1,3 @@
 # Demo
 
-* **Live Demo URL**: *(link to be added)*
-* **Demo Video**: *(link to be added)*
-
-*(Demo video and live link will be updated upon submission)*
+* **Demo Video**: *https://app.heygen.com/videos/9a6194f00e3b4eeb8adaf2b32014cbcc*

@@ -9,7 +9,7 @@ import { Download, ExternalLink, Copy, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
 import ListingABI from '../../abis/Listing.json';
 
-const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
+const LISTING_ADDRESS = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
 
 interface DocumentItemProps {
     title: string;
@@ -278,7 +278,7 @@ const ContractDocumentList: React.FC<ContractDocumentListProps> = ({ onComplete,
                     anchorHashBytes32,
                     paymentRootBytes32,
                     ethers.parseUnits(summary.loanAmount.toString(), 6), // listing price
-                    ethers.parseUnits('455000', 6) // goal = $455,000
+                    ethers.parseUnits('500000', 6) // goal = $500,000
                 ]
             );
 

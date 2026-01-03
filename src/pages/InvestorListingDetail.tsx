@@ -82,7 +82,7 @@ const InvestorListingDetail: React.FC = () => {
     const [fundingTxHash, setFundingTxHash] = React.useState<string | null>(null);
 
     // Mantle Sepolia Contract Address
-    const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
+    const LISTING_ADDRESS = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
 
     // Load initial state mainly from Chain, fallback to local if needed or just chain
     // Data: Fetch 'raised' from contract
@@ -159,7 +159,7 @@ const InvestorListingDetail: React.FC = () => {
         const fetchNoteMetadata = async () => {
             try {
                 const provider = new ethers.JsonRpcProvider("https://rpc.sepolia.mantle.xyz");
-                const listingAddress = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
+                const listingAddress = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
                 const listing = new ethers.Contract(listingAddress, ListingABI, provider);
 
                 // Call getNoteMetadata(noteId)

@@ -88,7 +88,7 @@ const InvestorDashboard: React.FC = () => {
     const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
     // Mantle Sepolia Contract Address
-    const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
+    const LISTING_ADDRESS = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
 
     // Data: Fetch 'raised' from contract with demo override
     React.useEffect(() => {

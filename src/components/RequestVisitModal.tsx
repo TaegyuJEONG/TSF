@@ -13,6 +13,20 @@ const RequestVisitModal: React.FC<RequestVisitModalProps> = ({ isOpen, onClose }
     const [slots, setSlots] = useState([{ date: '', time: '', ampm: 'AM' }]);
     const [message, setMessage] = useState('');
 
+    // Demo Autofill
+    const handleDemoAutofill = (e: React.MouseEvent) => {
+        // Prevent autofill if clicking on inputs or buttons
+        if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+
+        if (message === '') {
+            setSlots([
+                { date: '02/02/2026', time: '11:00', ampm: 'AM' },
+                { date: '02/02/2026', time: '08:00', ampm: 'PM' }
+            ]);
+            setMessage("Hi, I want to visit your home during this or next weekend");
+        }
+    };
+
     const addSlot = () => {
         setSlots([...slots, { date: '', time: '', ampm: 'AM' }]);
     };
@@ -32,15 +46,24 @@ const RequestVisitModal: React.FC<RequestVisitModalProps> = ({ isOpen, onClose }
     };
 
     const handleSubmit = () => {
-        // Mock submission logic
+        // Save to localStorage for demo persistence
+        localStorage.setItem('demo_visit_request', JSON.stringify({
+            slots,
+            message,
+            timestamp: new Date().toISOString()
+        }));
+
         console.log('Submitting visit request:', { slots, message });
-        alert('Visit request sent!');
+        alert('Visit request sent! Login as Homeowner to view it.');
         onClose();
     };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+                onClick={handleDemoAutofill}
+            >
 
                 {/* Available Date & Time Section */}
                 <div>

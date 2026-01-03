@@ -28,7 +28,8 @@ const BuyerPayments: React.FC = () => {
             try {
                 const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
                 const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
-                const listing = new ethers.Contract("0x155DC78c0d1512c934ca165B337D06BD62f0D3f4", ListingABI, provider);
+                const LISTING_ADDRESS = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
+                const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
                 const noteStatus = await listing.getNoteStatus(noteId);
 
                 const raised = Number(noteStatus.raised);

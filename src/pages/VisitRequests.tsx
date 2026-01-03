@@ -25,12 +25,28 @@ const VisitRequests: React.FC = () => {
         phone: "(555) 123-4567"
     };
 
-    const requestSlots = [
+    const [requestSlots, setRequestSlots] = useState([
         { date: '02/02/2026', time: '11:00', ampm: 'AM' },
         { date: '02/02/2026', time: '08:00', ampm: 'PM' }
-    ];
+    ]);
 
-    const requestMessage = "Hi, I want to visit your home during this or next weekend";
+    const [requestMessage, setRequestMessage] = useState("Hi, I want to visit your home during this or next weekend");
+
+    // Load from localStorage for demo
+    React.useEffect(() => {
+        const savedRequest = localStorage.getItem('demo_visit_request');
+        if (savedRequest) {
+            try {
+                const parsed = JSON.parse(savedRequest);
+                if (parsed.slots && parsed.message) {
+                    setRequestSlots(parsed.slots);
+                    setRequestMessage(parsed.message);
+                }
+            } catch (e) {
+                console.error("Failed to parse saved visit request", e);
+            }
+        }
+    }, []);
 
     const handleAccept = (index: number) => {
         setAcceptedSlot(requestSlots[index]);

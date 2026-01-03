@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import ListingABI from '../abis/Listing.json';
 import type { ContractSnapshotRef } from '../types/payment';
 
-const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
+const LISTING_ADDRESS = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
 
 const MerkleRecord: React.FC = () => {
     const navigate = useNavigate();

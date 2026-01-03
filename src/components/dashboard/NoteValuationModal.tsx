@@ -15,7 +15,7 @@ interface NoteValuationModalProps {
     upb: number; // Unpaid Principal Balance
 }
 
-const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
+const LISTING_ADDRESS = "0xA6a9B419Ae205E57c2f6D45f6289287927195068";
 
 const NoteValuationModal: React.FC<NoteValuationModalProps> = ({ isOpen, onClose, onList, upb }) => {
     const navigate = useNavigate();

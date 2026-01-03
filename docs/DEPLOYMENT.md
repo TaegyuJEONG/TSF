@@ -69,6 +69,8 @@ The demo is structured into specific role-based workflows.
 3.  System assigns **Risk Tier (A/B/C)**.
 4.  **Verified Buyer Profile** is created.
 
+*(To start Homeowner Onboarding: Click the profile icon in the top right of the Marketplace -> Select **"Create New Account"**)*
+
 ### B. Homeowner Onboarding & Listing
 1.  **Start** as Homeowner, create profile.
 2.  Enter **Property Details**, verify ownership docs, upload photos.
@@ -76,26 +78,39 @@ The demo is structured into specific role-based workflows.
 4.  **Preview** and **Publish Listing**.
 
 ### C. Deal Closing
-1.  **Visit**: Buyer requests visit -> Proposes time -> Homeowner accepts -> Confirmation.
+1.  **Visit(Optional)**: Buyer requests visit -> Proposes time -> Homeowner accepts -> Confirmation.
+
+    > **Note**: The steps below represent the **Core Functionality** of the TSF platform. For this section, a comprehensive walkthrough is available in our **[Demo Video](https://app.heygen.com/videos/9a6194f00e3b4eeb8adaf2b32014cbcc)**.
+
+*(Please make it sure that you are Homeowner-Michael Johnson)*
+
 2.  **Contract**: Homeowner clicks **"Build Contract"**.
 3.  **Fees**: Homeowner pays contract fee (1% of principal).
 4.  **Anchoring**: TSF anchors the contract hash + credit underwriting hash on-chain (Mantle Testnet).
 5.  **Partners**: Docs shared with Trust & Servicer partners off-chain.
 
 ### D. Payments (Buyer -> Homeowner)
+
+*(Please make it sure that you are Buyer-Chris R)*
 1.  Buyer makes monthly **Principal & Interest (P&I)** payment.
 2.  Payment processed off-chain (Buyer -> Servicer -> Homeowner).
 3.  **Payment Hash Anchored**: Only the payment hash is anchored on-chain, linked to the registered contract ledger.
+
+*(Please make it sure that you are Homeowner-Michael Johnson)*
 4.  **Verify**: Homeowner checks **Leaf (Merkle Root)** to see payment history.
 5.  **Snapshot**: "Contract Snapshot" tab displays hashes and anchor TX.
 
 ### E. Cash Out (Tokenization)
+
+*(Please make it sure that you are Homeowner-Michael Johnson)*
 1.  Homeowner clicks **"Cash Out"**.
 2.  Reviews TSF valuation, selects note sale price.
 3.  Reviews fees (Tokenization 0.5%, Success 1% upon full funding).
 4.  **Lists Note** (30-day funding period). Fees strictly contingent on 100% funding.
 
 ### F. Investor Onboarding & Investing
+*(To start Investor Onboarding: Click the profile icon in the top right of the Marketplace -> Select **"Create New Account"**)*
+
 1.  **Connect Wallet** (MetaMask).
 2.  **Verification**: Complete KYC/AML check via partner flow.
 3.  **Marketplace**: Access investor-only notes.
@@ -108,22 +123,25 @@ The demo is structured into specific role-based workflows.
         *   **Symbol**: `dUSD`
         *   **Decimals**: `6`
 5.  **Invest**:
-    *   Select Note -> Review Audit Info -> Agree to terms.
-    *   Enter Amount -> Approve Stablecoin -> Confirm Transaction.
+    *   Select 1st Note -> Click Invest Button -> Review Documents -> Agree to terms -> Enter Amount -> Approve Stablecoin -> Confirm Transaction.
     *   Invested amount updates in real-time.
     *   (Tip: Use a second wallet to fill the remaining amount to hit 100%).
+    *   (Tip: To change account, you should disconnect wallet and start investor onboarding again.)
 
 ### G. Claiming (Investor)
-1.  Buyer makes a payment.
+*(Please make it sure that you are Buyer-Chris R)*
+1.  **Buyer payment** tab to make a payment.
+
+*(Please make it sure that you are Investor account)*
 2.  **Investor Payments** tab updates with claimable amount (based on ownership share).
 3.  Click **"Claim Now"** -> Receive Stablecoins -> Status updates to "Claimed".
 4.  **Verify Ledger**: Click to see ownership %, total invested, claimed P&I, and confirm transactions on **MantleScan**.
 
----
+
 
 ## Smart Contract Details (Deployed)
 
-*   **Listing Contract**: `0x155DC78c0d1512c934ca165B337D06BD62f0D3f4`
+*   **Listing Contract**: `0xA6a9B419Ae205E57c2f6D45f6289287927195068`
 *   **DemoUSD**: `0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160` (Public Mint Enabled)
 
-*(Optional: If you want to deploy fresh contracts, see instructions in `chain/README.md` or `chain/hardhat.config.js`)*
+*(To start a fresh demo cycle: Close the 'Contract Documents' modal on the Contract page, then click 'Build Contract' again. This will generate a new agreement and mint a fresh Note on the blockchain.)*
