@@ -21,7 +21,7 @@ interface InvestModalProps {
 
 // Mantle Sepolia Contract Addresses
 const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
-const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
+const DEMOUSD_ADDRESS = "0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160";
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 

@@ -12,6 +12,7 @@
 ## 1. Prerequisites
 
 *   **Node.js**: v18 or higher
+*   **Browser**: Google Chrome (Recommended)
 *   **MetaMask**: Installed in your browser
 *   **Testnet MNT (Mantle Sepolia)**: Required for gas fees.
     *   [Mantle Faucet](https://faucet.testnet.mantle.xyz/) (Get test MNT here)
@@ -98,7 +99,15 @@ The demo is structured into specific role-based workflows.
 1.  **Connect Wallet** (MetaMask).
 2.  **Verification**: Complete KYC/AML check via partner flow.
 3.  **Marketplace**: Access investor-only notes.
-4.  **Invest**:
+4.  **Get Test dUSD**:
+    *   Click the **"Get Test dUSD"** button in the top navigation bar.
+    *   This will mint **1,000,000 dUSD** to your wallet (Features Public Minting for Demo).
+    *   Confirm the transaction in MetaMask.
+    *   *(If needed, Import Token manually)*:
+        *   **Contract Address**: `0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160`
+        *   **Symbol**: `dUSD`
+        *   **Decimals**: `6`
+5.  **Invest**:
     *   Select Note -> Review Audit Info -> Agree to terms.
     *   Enter Amount -> Approve Stablecoin -> Confirm Transaction.
     *   Invested amount updates in real-time.
@@ -115,6 +124,6 @@ The demo is structured into specific role-based workflows.
 ## Smart Contract Details (Deployed)
 
 *   **Listing Contract**: `0x155DC78c0d1512c934ca165B337D06BD62f0D3f4`
-*   **DemoUSD**: `0x2f514963a095533590E1FB98eedC637D3947d219`
+*   **DemoUSD**: `0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160` (Public Mint Enabled)
 
 *(Optional: If you want to deploy fresh contracts, see instructions in `chain/README.md` or `chain/hardhat.config.js`)*

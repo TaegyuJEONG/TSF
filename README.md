@@ -36,6 +36,8 @@ This creates comparable and investable seller-financing notes.
 TSF provides an integrated marketplace covering:
 
 * Homeowner onboarding and deal origination
+* Buyer onboarding (credit underwriting & target terms)
+* Visit arrangement & property inspection
 * Contract generation
 * Off-chain payments via licensed loan servicer
 * Title and trust management via licensed partners

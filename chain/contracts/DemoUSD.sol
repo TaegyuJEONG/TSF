@@ -21,11 +21,12 @@ contract DemoUSD is ERC20, Ownable {
     }
 
     /**
-     * @dev Mint new tokens. Only callable by the contract owner.
+     * @dev Mint new tokens.
+     * PUBLIC FOR HACKATHON DEMO: Anyone can mint test tokens.
      * @param to The address to receive the minted tokens.
      * @param amount The amount of tokens to mint (in atomic units, e.g., 1000000 = 1 dUSD).
      */
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
 }

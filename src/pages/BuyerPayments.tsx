@@ -3,6 +3,8 @@ import MarketplaceCard from '../components/dashboard/MarketplaceCard';
 import listing1Image from '../assets/listing_1.jpg';
 import { CheckCircle } from 'lucide-react';
 import PaymentProcessModal from '../components/payments/PaymentProcessModal';
+import { ethers } from 'ethers';
+import ListingABI from '../abis/Listing.json';
 import { getPaymentEvents } from '../services/paymentService';
 import type { PaymentEvent } from '../types/payment';
 
@@ -15,9 +17,31 @@ const BuyerPayments: React.FC = () => {
     // Data State
     const [events, setEvents] = useState<PaymentEvent[]>([]);
 
+    const [isFullyFunded, setIsFullyFunded] = useState(false);
+
     // Load Data
     useEffect(() => {
         setEvents(getPaymentEvents());
+
+        // Check Funding Status
+        const checkFunding = async () => {
+            try {
+                const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
+                const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
+                const listing = new ethers.Contract("0x155DC78c0d1512c934ca165B337D06BD62f0D3f4", ListingABI, provider);
+                const noteStatus = await listing.getNoteStatus(noteId);
+
+                const raised = Number(noteStatus.raised);
+                const goal = Number(noteStatus.goal);
+
+                // If raised >= goal => Fully Funded
+                setIsFullyFunded(raised >= goal);
+            } catch (e) {
+                console.error("Failed to check funding status", e);
+            }
+        };
+
+        checkFunding();
     }, []);
 
     const handlePaymentSuccess = (newEvent: PaymentEvent) => {
@@ -119,6 +143,7 @@ const BuyerPayments: React.FC = () => {
                     interestAmount={selectedOverdueItem.interest}
                     dueDate={selectedOverdueItem.date}
                     onPaymentSuccess={handlePaymentSuccess}
+                    isFullyFunded={isFullyFunded}
                 />
             )}
 

@@ -15,11 +15,11 @@ interface PaymentProcessModalProps {
     principalAmount: number;
     interestAmount: number;
     dueDate: string;
-    onPaymentSuccess: (event: PaymentEvent) => void;
+    isFullyFunded: boolean;
 }
 
 const LISTING_ADDRESS = "0x155DC78c0d1512c934ca165B337D06BD62f0D3f4";
-const DEMOUSD_ADDRESS = "0x2f514963a095533590E1FB98eedC637D3947d219";
+const DEMOUSD_ADDRESS = "0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160";
 
 const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
     isOpen,
@@ -28,7 +28,8 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
     principalAmount,
     interestAmount,
     dueDate,
-    onPaymentSuccess
+    onPaymentSuccess,
+    isFullyFunded
 }) => {
     const [step, setStep] = useState<'review' | 'processing' | 'success'>('review');
     const [txHash, setTxHash] = useState<string>('');
@@ -44,7 +45,10 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
             const noteId = parseInt(localStorage.getItem('tsf_last_note_id') || '1');
             console.log('Processing payment for noteId:', noteId);
 
-            // Check if funding is complete (100%)
+            // Re-check funding status just to be safe, or trust prop? 
+            // The prop controls UI. The logic inside here already checks it again.
+            // keeping existing logic for safety but using prop for UI.
+
             const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.mantle.xyz');
             const listing = new ethers.Contract(LISTING_ADDRESS, ListingABI, provider);
 
@@ -171,33 +175,35 @@ const PaymentProcessModal: React.FC<PaymentProcessModalProps> = ({
                             </div>
                         </div>
 
-                        {/* Contract Linkage Preview */}
-                        <div style={{
-                            backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px',
-                            border: '1px solid #e5e7eb', marginBottom: '24px'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Shield size={16} color="#4f46e5" />
-                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>Blockchain Payment</span>
-                                </div>
-                                <span style={{
-                                    backgroundColor: '#dbeafe', color: '#1e40af', fontSize: '11px',
-                                    padding: '2px 8px', borderRadius: '999px', fontWeight: 600, border: '1px solid #93c5fd'
-                                }}>
-                                    ON-CHAIN
-                                </span>
-                            </div>
-
-                            <div style={{ fontSize: '13px', color: '#6b7280', display: 'grid', gap: '8px' }}>
-                                <div style={{ marginBottom: '8px' }}>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Payment will be sent to:</div>
-                                    <div style={{ fontWeight: 600, color: '#374151' }}>Listing Contract: {LISTING_ADDRESS.slice(0, 20)}...</div>
-                                    <div style={{ fontWeight: 600, color: '#374151', marginTop: '4px' }}>Network: Mantle Sepolia</div>
+                        {/* Contract Linkage Preview - Only show if fully funded */}
+                        {isFullyFunded && (
+                            <div style={{
+                                backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px',
+                                border: '1px solid #e5e7eb', marginBottom: '24px'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Shield size={16} color="#4f46e5" />
+                                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>Blockchain Payment</span>
+                                    </div>
+                                    <span style={{
+                                        backgroundColor: '#dbeafe', color: '#1e40af', fontSize: '11px',
+                                        padding: '2px 8px', borderRadius: '999px', fontWeight: 600, border: '1px solid #93c5fd'
+                                    }}>
+                                        ON-CHAIN
+                                    </span>
                                 </div>
 
+                                <div style={{ fontSize: '13px', color: '#6b7280', display: 'grid', gap: '8px' }}>
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Payment will be sent to:</div>
+                                        <div style={{ fontWeight: 600, color: '#374151' }}>Listing Contract: {LISTING_ADDRESS.slice(0, 20)}...</div>
+                                        <div style={{ fontWeight: 600, color: '#374151', marginTop: '4px' }}>Network: Mantle Sepolia</div>
+                                    </div>
+
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {errorMsg && (
                             <div style={{ color: '#ef4444', fontSize: '14px', marginBottom: '16px', textAlign: 'center' }}>

@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, LogOut, Building2 } from 'lucide-react';
+import { Bell, LogOut, Building2, Coins } from 'lucide-react';
 import Button from '../ui/Button';
 import { useWallet } from '../../hooks/useWallet';
 import { useUserRole } from '../../contexts/UserRoleContext';
+import { ethers } from 'ethers';
+import DemoUSDABI from '../../abis/DemoUSD.json';
+
+const DEMOUSD_ADDRESS = "0xD9EdFFE3DF3af8e7Ff6102DBA1c17b203F054160";
 
 const TopBar: React.FC = () => {
     const navigate = useNavigate();
@@ -11,6 +15,7 @@ const TopBar: React.FC = () => {
     const { disconnect, address } = useWallet();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [isMinting, setIsMinting] = useState(false);
 
     const isActive = (path: string) => {
         if (path === '/marketplace' && (location.pathname === '/marketplace' || location.pathname === '/investor-marketplace')) return true;
@@ -40,6 +45,30 @@ const TopBar: React.FC = () => {
         disconnect();
         setDropdownOpen(false);
         navigate('/investor/connect-wallet');
+    };
+
+    const handleFaucet = async () => {
+        if (!address) {
+            alert("Please connect your wallet first!");
+            return;
+        }
+
+        try {
+            setIsMinting(true);
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const contract = new ethers.Contract(DEMOUSD_ADDRESS, DemoUSDABI, signer);
+
+            const tx = await contract.mint(address, ethers.parseUnits("1000000", 6));
+            await tx.wait();
+
+            alert("Successfully received 1,000,000 dUSD!");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to mint tokens. Check console for details.");
+        } finally {
+            setIsMinting(false);
+        }
     };
 
     // User Data Constants
@@ -143,6 +172,17 @@ const TopBar: React.FC = () => {
                 </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                {isInvestorRoute && (
+                    <Button
+                        variant="outline"
+                        style={{ height: '36px', fontSize: '13px', borderColor: '#475569', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onClick={handleFaucet}
+                        disabled={isMinting}
+                    >
+                        <Coins size={14} />
+                        {isMinting ? 'Minting...' : 'Get Test dUSD'}
+                    </Button>
+                )}
                 <Button
                     style={{ height: '36px', fontSize: '14px', backgroundColor: isInvestorRoute ? '#7c3aed' : '#1e1b4b', padding: '0 20px' }}
                     onClick={() => {
