@@ -114,7 +114,7 @@ TSF generates revenue through transparent, transaction-aligned fees across the l
 
 ---
 
-## Hackathon Deliverables
+## Documentation
 
 Please find the detailed documentation below:
 

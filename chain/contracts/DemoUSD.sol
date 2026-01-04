@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title DemoUSD
- * @dev Mock ERC20 USD stablecoin for hackathon demo purposes.
+ * @dev Mock ERC20 USD stablecoin for demo and testing purposes.
  *      Decimals set to 6 to mimic USDC.
  *      Only the owner (SPV Admin) can mint tokens.
  */
@@ -22,7 +22,7 @@ contract DemoUSD is ERC20, Ownable {
 
     /**
      * @dev Mint new tokens.
-     * PUBLIC FOR HACKATHON DEMO: Anyone can mint test tokens.
+     * PUBLIC FOR TESTING: Anyone can mint test tokens.
      * @param to The address to receive the minted tokens.
      * @param amount The amount of tokens to mint (in atomic units, e.g., 1000000 = 1 dUSD).
      */

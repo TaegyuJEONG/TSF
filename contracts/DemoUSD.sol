@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title DemoUSD
- * @dev Mock ERC20 USD stablecoin for hackathon demo purposes.
+ * @dev Mock ERC20 USD stablecoin for demo and testing purposes.
  *      Decimals set to 6 to mimic USDC.
  *      Only the owner (SPV Admin) can mint tokens.
  */
