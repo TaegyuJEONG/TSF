@@ -1,0 +1,66 @@
+# TSF — Full Product Context
+
+> TSF is a financial platform that helps homeowners and global investors solve liquidity challenges in real estate financing by tokenizing mortgage notes and facilitating secure transactions.
+
+## Target Audience
+
+- Homeowners looking to liquidate their notes
+- Global investors interested in stablecoin investments
+- Real estate professionals seeking innovative financing options
+- Blockchain enthusiasts wanting to diversify their portfolios with real estate assets
+
+## Problems & Solutions
+
+### Problem: Homeowners struggle to find buyers for their loans and notes.
+**Solution:** TSF tokenizes notes and exposes them to a global investor marketplace, enhancing liquidity.
+
+### Problem: Investors face challenges with traditional, slow real estate investments and lack of access.
+**Solution:** TSF allows investors to purchase low-entry shares in residential real estate-backed notes using stablecoins.
+
+### Problem: Complexity of managing financial assets and compliance with regulations.
+**Solution:** TSF handles servicing, reporting, and regulatory compliance through partnerships, streamlining the investment process.
+
+## Key Use Cases
+
+- Homeowners can quickly liquidate their mortgage notes for cash.
+- Investors can diversify their portfolios by funding multiple notes with stablecoins.
+- Real estate professionals can use TSF to simplify funding processes for clients.
+- Institutional investors can tap into stable real estate-backed returns.
+
+## Frequently Asked Questions
+
+### Q: What is note tokenization?
+A: Note tokenization converts your financial notes into digital assets that can be bought and sold in a secure marketplace.
+
+### Q: Who can invest through TSF?
+A: Anyone with stablecoins can invest, but we primarily target certified Web3 and institutional investors.
+
+### Q: What happens if my note doesn't get fully funded?
+A: There are no fees for unsuccessful offerings, and your note remains credible for future transactions.
+
+### Q: How is investor security ensured?
+A: We partner with regulated firms and manage compliance, KYC/AML, and custody, ensuring investor protection.
+
+## Competitive Landscape
+
+Alternatives: Real Estate Investment Trusts (REITs), Tokenized Platforms (e.g., Harbor, RealT), Crowdfunding Platforms (e.g., Fundrise)
+
+### Liquidity of Investments
+- **TSF:** TSF tokenizes mortgage notes, enabling quick liquidity through a global marketplace, reducing time for homeowners and investors alike.
+- **Tokenized Platforms (e.g., Harbor, RealT):** Offer liquidity through trading but may not focus solely on mortgage notes.
+- **Crowdfunding Platforms (e.g., Fundrise):** Liquidity varies; often requires longer investment durations with penalties for early withdrawals.
+
+### Entry Barriers for Investors
+- **TSF:** TSF allows low-entry investments using stablecoins, making it accessible to a broader audience.
+- **Tokenized Platforms (e.g., Harbor, RealT):** Investments often require knowledge of blockchain and additional tech setup.
+- **Crowdfunding Platforms (e.g., Fundrise):** May have minimum investment thresholds that can be high relative to TSF.
+
+### Regulatory Compliance Management
+- **TSF:** TSF manages compliance effortlessly through partnerships, ensuring investor security without additional burdens on the users.
+- **Tokenized Platforms (e.g., Harbor, RealT):** Compliance handled by companies but can be convoluted due to lack of standardization.
+- **Crowdfunding Platforms (e.g., Fundrise):** Manage compliance but less transparency may leave investors uncertain about risks.
+
+### Market Education and Awareness
+- **TSF:** TSF actively educates users on note tokenization and cryptocurrency integration, reducing hesitation among new users.
+- **Tokenized Platforms (e.g., Harbor, RealT):** Educate users but may attract a niche audience already comfortable with blockchain.
+- **Crowdfunding Platforms (e.g., Fundrise):** Focus on traditional investment paradigms, limiting education around digital asset investment.
