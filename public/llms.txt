@@ -1,6 +1,6 @@
 # TSF
 
-> TSF is a financial platform that helps homeowners and global investors solve liquidity challenges in real estate financing by tokenizing mortgage notes and facilitating secure transactions.
+> TSF is a platform that helps homeowners liquidate their home equity by tokenizing their notes and connecting them with global investors through stablecoins.
 
 ## Documentation
 
